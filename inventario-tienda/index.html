@@ -1,0 +1,256 @@
+<title>Inventario de la Tienda</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: una columna para celular; resumen de alertas arriba, lista de productos abajo, hoja inferior para editar */
+:root{
+  --bg:#f3f6f4;--surface:#ffffff;--fg:#17221d;--muted:#5d6b64;--line:#dbe3de;
+  --accent:#1d6b4f;--accent-fg:#ffffff;--crit:#c0392b;--crit-bg:#fdecea;--warn:#9a6b00;--warn-bg:#fff4d6;--ok:#1d6b4f;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--body:"Inter",ui-sans-serif,system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1512;--surface:#18201c;--fg:#e6eee9;--muted:#9aa9a1;--line:#2a3530;
+  --accent:#4cc08f;--accent-fg:#06140e;--crit:#ff8a7a;--crit-bg:#3a1a16;--warn:#f0c14b;--warn-bg:#352a0c;--ok:#4cc08f;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1512;--surface:#18201c;--fg:#e6eee9;--muted:#9aa9a1;--line:#2a3530;
+  --accent:#4cc08f;--accent-fg:#06140e;--crit:#ff8a7a;--crit-bg:#3a1a16;--warn:#f0c14b;--warn-bg:#352a0c;--ok:#4cc08f;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
+.wrap{max-width:640px;margin:0 auto;padding-block:20px 96px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--display);font-weight:800;font-size:1.7rem;margin:0;letter-spacing:-.01em;text-wrap:balance}
+h2{font-family:var(--display);font-weight:600;font-size:1.05rem;margin:0}
+.sub{color:var(--muted);font-size:.85rem}
+.role{display:inline-block;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.alerts{display:flex;flex-direction:column;gap:8px}
+.alert{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;font-size:.9rem}
+.alert.crit{background:var(--crit-bg);color:var(--crit)}
+.alert.warn{background:var(--warn-bg);color:var(--warn)}
+.alert b{font-weight:600}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+input,select{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:inherit;font-size:.85rem;padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{display:grid;grid-template-columns:72px 1fr;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px}
+.item.crit{border-left:4px solid var(--crit)}
+.item.warn{border-left:4px solid var(--warn)}
+.thumb{width:72px;height:72px;border-radius:8px;object-fit:cover;background:var(--bg);display:grid;place-items:center;color:var(--muted);font-size:.7rem;text-align:center}
+.info{min-width:0;display:flex;flex-direction:column;gap:4px}
+.row{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.name{font-weight:600;overflow-wrap:anywhere}
+.price{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+.stock{font-variant-numeric:tabular-nums;font-size:.88rem}
+.stock strong{font-family:var(--display);font-size:1.15rem}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:.72rem;padding:2px 8px;border-radius:99px;background:var(--bg);color:var(--muted)}
+.tag.crit{background:var(--crit-bg);color:var(--crit)}
+.tag.warn{background:var(--warn-bg);color:var(--warn)}
+.tag.ok{color:var(--ok)}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.btn{font:inherit;font-size:.85rem;font-weight:500;padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.danger{color:var(--crit);border-color:var(--crit)}
+.fab{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));font:inherit;font-weight:600;padding:14px 20px;border-radius:99px;border:0;background:var(--accent);color:var(--accent-fg);box-shadow:0 6px 20px rgb(0 0 0 / .2);cursor:pointer}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:24px;text-align:center;color:var(--muted)}
+.sheet-bg{position:fixed;inset:0;background:rgb(0 0 0 / .45);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.sheet{background:var(--surface);width:100%;max-width:640px;border-radius:16px 16px 0 0;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px;max-height:92vh;overflow:auto}
+.field{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.preview{width:96px;height:96px;border-radius:8px;object-fit:cover}
+.note{font-size:.85rem;color:var(--muted)}
+.err{color:var(--crit);font-size:.85rem}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(20px);opacity:.6}}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1 id="shopName">Inventario de la Tienda</h1>
+    <div class="sub"><span id="roleTag" class="role">Cargando…</span> <span id="status"></span></div>
+  </header>
+
+  <section class="alerts" id="alerts" aria-live="polite"></section>
+
+  <div class="tools">
+    <input id="q" type="search" placeholder="Buscar producto…" aria-label="Buscar producto">
+    <div class="chips" role="group" aria-label="Filtro">
+      <button class="chip" data-f="all" aria-pressed="true">Todos</button>
+      <button class="chip" data-f="low" aria-pressed="false">Reponer</button>
+      <button class="chip" data-f="slow" aria-pressed="false">Sin movimiento</button>
+      <button class="chip" data-f="top" aria-pressed="false">Más vendidos</button>
+    </div>
+  </div>
+
+  <section class="list" id="list">
+    <div class="empty">Cargando productos…</div>
+  </section>
+
+  <p class="note" id="legend">Reponer: stock en o bajo el mínimo, o se acaba en 7 días o menos al ritmo de ventas actual. Sin movimiento: sin ventas en 30 días.</p>
+</div>
+
+<button class="fab" id="addBtn" hidden>+ Producto</button>
+<div id="sheetRoot"></div>
+
+<script>
+const SLOW_DAYS = 30, FAST_DAYS_LEFT = 7, DAY = 864e5;
+let db=null, assets=null, user=null, isAdmin=false, products=[], filter="all", query="", cur="S/";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money=n=>cur+" "+Number(n||0).toFixed(2);
+
+function stats(p){
+  const now=Date.now(), sales=(p.sales||[]).filter(s=>now-s.t<=SLOW_DAYS*DAY);
+  const sold=sales.reduce((a,s)=>a+s.q,0), rate=sold/SLOW_DAYS;
+  const daysLeft=rate>0?p.qty/rate:Infinity;
+  const age=(now-(p.createdAt||now))/DAY;
+  const low=p.qty<=(p.min||0)||daysLeft<=FAST_DAYS_LEFT;
+  const slow=sold===0&&age>=SLOW_DAYS&&p.qty>0;
+  return {sold,rate,daysLeft,low,slow};
+}
+
+function render(){
+  const enriched=products.map(p=>({p,s:stats(p)}));
+  const ranked=enriched.filter(x=>x.s.sold>0).sort((a,b)=>b.s.sold-a.s.sold);
+  const topN=Math.max(1,Math.ceil(ranked.length/3));
+  const topIds=new Set(ranked.slice(0,topN).map(x=>x.p.id));
+
+  // Alerts
+  const lowTop=enriched.filter(x=>x.s.low&&topIds.has(x.p.id));
+  const lowOther=enriched.filter(x=>x.s.low&&!topIds.has(x.p.id));
+  const slow=enriched.filter(x=>x.s.slow);
+  let a="";
+  if(lowTop.length)a+=`<div class="alert crit"><span>●</span><div><b>Urgente: se acaban productos que más se venden.</b> ${lowTop.map(x=>esc(x.p.name)+" ("+x.p.qty+")").join(", ")}</div></div>`;
+  if(lowOther.length)a+=`<div class="alert crit"><span>●</span><div><b>Stock bajo:</b> ${lowOther.map(x=>esc(x.p.name)+" ("+x.p.qty+")").join(", ")}</div></div>`;
+  if(slow.length)a+=`<div class="alert warn"><span>●</span><div><b>Sin ventas en ${SLOW_DAYS} días:</b> ${slow.map(x=>esc(x.p.name)).join(", ")}. Considera una oferta.</div></div>`;
+  $("#alerts").innerHTML=a;
+
+  let rows=enriched.filter(x=>x.p.name.toLowerCase().includes(query));
+  if(filter==="low")rows=rows.filter(x=>x.s.low);
+  if(filter==="slow")rows=rows.filter(x=>x.s.slow);
+  if(filter==="top")rows=rows.filter(x=>topIds.has(x.p.id));
+  rows.sort((a,b)=>(b.s.low-a.s.low)||(topIds.has(b.p.id)-topIds.has(a.p.id))||a.p.name.localeCompare(b.p.name));
+
+  if(!products.length){
+    $("#list").innerHTML=`<div class="empty">Todavía no hay productos.<br>${isAdmin?"Toca <b>+ Producto</b> para agregar el primero con su foto, precio y stock.":"Cuando el administrador agregue productos, aparecerán aquí al instante."}</div>`;
+    return;
+  }
+  if(!rows.length){$("#list").innerHTML=`<div class="empty">Ningún producto coincide con este filtro.</div>`;return;}
+
+  $("#list").innerHTML=rows.map(({p,s})=>{
+    const top=topIds.has(p.id), cls=s.low?"crit":s.slow?"warn":"";
+    const tags=[];
+    if(s.low)tags.push(`<span class="tag crit">Reponer</span>`);
+    if(s.slow)tags.push(`<span class="tag warn">Sin movimiento</span>`);
+    if(top)tags.push(`<span class="tag ok">Más vendido</span>`);
+    if(s.sold)tags.push(`<span class="tag">${s.sold} vendidos en 30 días</span>`);
+    if(isFinite(s.daysLeft)&&s.daysLeft<60)tags.push(`<span class="tag">Alcanza ~${Math.max(0,Math.floor(s.daysLeft))} días</span>`);
+    const img=p.photo?`<img class="thumb" src="/_blob/${esc(p.photo)}" alt="" onerror="this.outerHTML='<div class=thumb>Sin foto</div>'">`:`<div class="thumb">Sin foto</div>`;
+    const act=isAdmin?`<div class="actions">
+      <button class="btn primary" data-act="sale" data-id="${esc(p.id)}">− Venta</button>
+      <button class="btn" data-act="in" data-id="${esc(p.id)}">+ Entrada</button>
+      <button class="btn" data-act="edit" data-id="${esc(p.id)}">Editar</button></div>`:"";
+    return `<article class="item ${cls}">${img}<div class="info">
+      <div class="row"><span class="name">${esc(p.name)}</span><span class="price">${money(p.price)}</span></div>
+      <div class="stock"><strong>${p.qty}</strong> en stock · mínimo ${p.min||0}</div>
+      <div class="tags">${tags.join("")}</div>${act}</div></article>`;
+  }).join("");
+}
+
+// ---------- Sheets (forms) ----------
+function closeSheet(){$("#sheetRoot").innerHTML="";}
+function openSheet(html,onReady){
+  $("#sheetRoot").innerHTML=`<div class="sheet-bg" id="bg"><form class="sheet" id="sheet">${html}</form></div>`;
+  $("#bg").addEventListener("click",e=>{if(e.target.id==="bg")closeSheet();});
+  onReady($("#sheet"));
+}
+
+function editSheet(p){
+  const isNew=!p; p=p||{name:"",price:"",qty:"",min:""};
+  openSheet(`<h2>${isNew?"Nuevo producto":"Editar producto"}</h2>
+    <label class="field">Nombre<input id="f-name" required maxlength="80" value="${esc(p.name)}"></label>
+    <div class="grid2">
+      <label class="field">Precio (${esc(cur)})<input id="f-price" type="number" step="0.01" min="0" inputmode="decimal" required value="${esc(p.price)}"></label>
+      <label class="field">Stock actual<input id="f-qty" type="number" min="0" step="1" inputmode="numeric" required value="${esc(p.qty)}"></label>
+    </div>
+    <label class="field">Stock mínimo (avisa cuando llegue aquí)<input id="f-min" type="number" min="0" step="1" inputmode="numeric" required value="${esc(p.min)}"></label>
+    <label class="field">Foto<input id="f-photo" type="file" accept="image/*"></label>
+    ${p.photo?`<img class="preview" id="f-prev" src="/_blob/${esc(p.photo)}" alt="">`:`<img class="preview" id="f-prev" hidden alt="">`}
+    <div class="err" id="f-err"></div>
+    <div class="actions"><button class="btn primary" type="submit" id="f-save">Guardar</button>
+    <button class="btn" type="button" id="f-cancel">Cancelar</button>
+    ${isNew?"":`<button class="btn danger" type="button" id="f-del">Eliminar</button>`}</div>
+    <div id="f-confirm"></div>`,form=>{
+    let file=null;
+    form.querySelector("#f-cancel").onclick=closeSheet;
+    form.querySelector("#f-photo").onchange=e=>{file=e.target.files[0]||null;const pv=form.querySelector("#f-prev");if(file){pv.src=URL.createObjectURL(file);pv.hidden=false;}};
+    const del=form.querySelector("#f-del");
+    if(del)del.onclick=()=>{form.querySelector("#f-confirm").innerHTML=`<p class="err">¿Eliminar "${esc(p.name)}" para todos?</p><div class="actions"><button class="btn danger" type="button" id="f-yes">Sí, eliminar</button><button class="btn" type="button" id="f-no">No</button></div>`;
+      form.querySelector("#f-no").onclick=()=>form.querySelector("#f-confirm").innerHTML="";
+      form.querySelector("#f-yes").onclick=async()=>{try{await db.collection("products").doc(p.id).delete();if(p.photo&&assets)assets.delete(p.photo).catch(()=>{});closeSheet();}catch(e){form.querySelector("#f-err").textContent="No se pudo eliminar. Revisa tu conexión e inténtalo de nuevo.";}};};
+    form.onsubmit=async e=>{
+      e.preventDefault();const btn=form.querySelector("#f-save");btn.disabled=true;btn.textContent="Guardando…";
+      const err=form.querySelector("#f-err");err.textContent="";
+      try{
+        const data={name:form.querySelector("#f-name").value.trim(),price:+form.querySelector("#f-price").value,qty:Math.max(0,parseInt(form.querySelector("#f-qty").value)||0),min:Math.max(0,parseInt(form.querySelector("#f-min").value)||0)};
+        if(file){
+          if(!assets)throw new Error("Solo un administrador puede subir fotos.");
+          const blob=await shrink(file);const r=await assets.upload(blob,{type:"image/jpeg"});data.photo=r.id;
+          if(p.photo)assets.delete(p.photo).catch(()=>{});
+        }
+        if(isNew){await db.collection("products").doc().set({...data,photo:data.photo||null,createdAt:Date.now(),sales:[]});}
+        else{await db.collection("products").doc(p.id).update(data);}
+        closeSheet();
+      }catch(x){err.textContent=x.message&&!x.code?x.message:"No se pudo guardar. Revisa tu conexión e inténtalo de nuevo.";btn.disabled=false;btn.textContent="Guardar";}
+    };
+  });
+}
+
+function moveSheet(p,type){
+  const sale=type==="sale";
+  openSheet(`<h2>${sale?"Registrar venta":"Registrar entrada"}: ${esc(p.name)}</h2>
+    <p class="note">Stock actual: <b>${p.qty}</b></p>
+    <label class="field">Cantidad<input id="m-q" type="number" min="1" step="1" inputmode="numeric" value="1" required></label>
+    <div class="err" id="m-err"></div>
+    <div class="actions"><button class="btn primary" type="submit">${sale?"Restar del stock":"Sumar al stock"}</button><button class="btn" type="button" id="m-cancel">Cancelar</button></div>`,form=>{
+    form.querySelector("#m-cancel").onclick=closeSheet;
+    form.onsubmit=async e=>{
+      e.preventDefault();const q=Math.max(1,parseInt(form.querySelector("#m-q").value)||1);
+      if(sale&&q>p.qty){form.querySelector("#m-err").textContent=`Solo hay ${p.qty} en stock.`;return;}
+      const now=Date.now();
+      const upd=sale?{qty:p.qty-q,sales:[...(p.sales||[]).filter(s=>now-s.t<=60*DAY),{t:now,q}]}:{qty:p.qty+q};
+      try{await db.collection("products").doc(p.id).update(upd);closeSheet();}
+      catch(x){form.querySelector("#m-err").textContent="No se pudo guardar. Revisa tu conexión e inténtalo de nuevo.";}
+    };
+  });
+}
+
+// Reduce photo size before upload (saves storage and data on phones)
+function shrink(file){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{const m=900,s=Math.min(1,m/Math.max(img.width,img.height));const c=document.createElement("canvas");c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext("2d").drawImage(img,0,0,c.width,c.height);c.toBlob(b=>b?res(b):rej(new Error("No se pudo leer la foto.")),"image/jpeg",.82);};img.onerror=()=>rej(new Error("Ese archivo no es una imagen válida."));img.src=URL.createObjectURL(file);});}
+
+// ---------- Events ----------
+$("#q").addEventListener("input",e=>{query=e.target.value.trim().toLowerCase();render();});
+document.querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{filter=c.dataset.f;document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===c));render();}));
+$("#list").addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;const p=products.find(x=>x.id===b.dataset.id);if(!p)return;
+  if(b.dataset.act==="edit")editSheet(p);else moveSheet(p,b.dataset.act);});
+$("#addBtn").addEventListener("click",()=>editSheet(null));
+
+// ---------- Boot ----------
+(async()=>{
+  user=await claude.use("user");
+  isAdmin=!!(user&&await user.canEdit());
+  db=await claude.use("db");
+  if(isAdmin)assets=await claude.use("assets");
+  $("#roleTag").textContent=isAdmin?"Administrador":"Solo lectura";
+  $("#addBtn").hidden=!isAdmin;
+  if(!db){$("#list").innerHTML=`<div class="empty">Inicia sesión en Claude para ver el inventario.</div>`;return;}
+  const timer=setTimeout(()=>{$("#status").textContent="· Sin conexión, los datos pueden estar desactualizados";},10000);
+  db.doc("config/shop").onSnapshot(s=>{if(s.exists){const d=s.data();if(d.currency)cur=d.currency;if(d.name){$("#shopName").textContent=d.name;}render();}},()=>{});
+  db.collection("products").onSnapshot(snap=>{
+    products=snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(!snap.metadata.fromCache){clearTimeout(timer);$("#status").textContent="· En vivo";}
+    render();
+  },()=>{clearTimeout(timer);$("#status").textContent="· No se pudo cargar";});
+})();
+</script>
