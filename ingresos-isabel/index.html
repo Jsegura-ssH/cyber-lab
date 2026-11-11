@@ -1,0 +1,708 @@
+<title>Ingresos Isabel</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: una columna para celular, 4 pestañas fijas abajo (Hoy, Pensionistas, Ventas, Resumen); formularios en hoja inferior */
+:root{
+  --bg:#f3f5f8;--surface:#ffffff;--fg:#151b26;--muted:#596273;--line:#dde1e8;
+  --accent:#3340d9;--accent-fg:#ffffff;--accent-soft:#e8eafc;
+  --debt:#b4531a;--debt-bg:#fdeee3;--ok:#1c7c4d;--ok-bg:#e1f4ea;--crit:#c0392b;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;--body:"Inter",ui-sans-serif,system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1118;--surface:#171b25;--fg:#e8ebf2;--muted:#98a2b5;--line:#272d3b;
+  --accent:#8c9bff;--accent-fg:#0b0f24;--accent-soft:#222849;
+  --debt:#f0a36b;--debt-bg:#3a2415;--ok:#58d195;--ok-bg:#12301f;--crit:#ff8a7a;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1118;--surface:#171b25;--fg:#e8ebf2;--muted:#98a2b5;--line:#272d3b;
+  --accent:#8c9bff;--accent-fg:#0b0f24;--accent-soft:#222849;
+  --debt:#f0a36b;--debt-bg:#3a2415;--ok:#58d195;--ok-bg:#12301f;--crit:#ff8a7a;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
+.wrap{max-width:640px;margin:0 auto;padding-block:18px 110px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--display);font-weight:800;font-size:1.7rem;margin:0;letter-spacing:-.01em}
+h2{font-family:var(--display);font-weight:600;font-size:1.1rem;margin:0}
+.sub{color:var(--muted);font-size:.85rem}
+.role{display:inline-block;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+#app{display:flex;flex-direction:column;gap:12px;min-width:0}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}
+.ctrls{display:grid;grid-template-columns:1fr;gap:8px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:inherit;font-size:.88rem;padding:8px 14px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.sumbar{display:flex;gap:14px;flex-wrap:wrap;font-size:.88rem;color:var(--muted)}
+.sumbar b{color:var(--fg);font-variant-numeric:tabular-nums}
+.person{display:flex;flex-direction:column;gap:8px}
+.prow{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.pname{font-weight:600;overflow-wrap:anywhere}
+.ctrs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+.ctr{display:flex;align-items:center;justify-content:space-between;gap:4px;min-width:0;background:var(--bg);border-radius:10px;padding:6px}
+.ctr .lbl{font-size:.72rem;color:var(--muted);line-height:1.15;flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+.ctr .n{font-family:var(--display);font-weight:800;font-size:1.25rem;min-width:1.4em;text-align:center;font-variant-numeric:tabular-nums}
+.cb{flex:none;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-size:1.3rem;font-weight:600;cursor:pointer;line-height:1}
+.cb.plus{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.tag{font-size:.74rem;padding:2px 8px;border-radius:99px;background:var(--bg);color:var(--muted);white-space:nowrap}
+.tag.debt{background:var(--debt-bg);color:var(--debt)}
+.tag.ok{background:var(--ok-bg);color:var(--ok)}
+.num{font-variant-numeric:tabular-nums}
+.btn{font:inherit;font-size:.9rem;font-weight:500;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.danger{color:var(--crit);border-color:var(--crit)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:22px;text-align:center;color:var(--muted)}
+.list{display:flex;flex-direction:column;gap:8px}
+.lrow{display:flex;justify-content:space-between;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;text-align:left;font:inherit;color:var(--fg);width:100%}
+.lrow.static{cursor:default}
+.big{font-family:var(--display);font-weight:800;font-size:2rem;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.kv:last-child{border-bottom:0}
+.kv span:last-child{font-variant-numeric:tabular-nums;font-weight:600}
+.kv.sub2 span:first-child{color:var(--muted);padding-left:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--bg);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}
+.stat small{color:var(--muted);font-size:.72rem}
+.stat b{font-variant-numeric:tabular-nums;font-size:.98rem}
+.bar{height:8px;border-radius:99px;background:var(--bg);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;background:var(--accent)}
+.bar i.best{background:var(--ok)}
+.bar i.worst{background:var(--debt)}
+.drow{display:flex;flex-direction:column;gap:4px;padding:8px 0;border-bottom:1px solid var(--line)}
+.drow:last-child{border-bottom:0}
+#nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);z-index:10}
+#nav button{font:inherit;font-size:.72rem;font-weight:500;background:none;border:0;color:var(--muted);padding:12px 4px;cursor:pointer}
+#nav button[aria-current="page"]{color:var(--accent);font-weight:600;box-shadow:inset 0 2px 0 var(--accent)}
+.sheet-bg{position:fixed;inset:0;background:rgb(0 0 0 / .45);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.sheet{background:var(--surface);width:100%;max-width:640px;border-radius:16px 16px 0 0;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px;max-height:92vh;overflow:auto}
+.field{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.note{font-size:.85rem;color:var(--muted)}
+.err{color:var(--crit);font-size:.85rem}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:99px;font-size:.88rem;z-index:30;max-width:90vw}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(20px);opacity:.6}}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Ingresos Isabel</h1>
+    <div class="sub"><span class="role">Administrador</span> <span id="status"></span></div>
+  </header>
+  <main id="app"><div class="empty">Cargando…</div></main>
+</div>
+<nav id="nav" hidden>
+  <button data-tab="hoy">Hoy</button>
+  <button data-tab="pens">Pensionistas</button>
+  <button data-tab="ventas">Ventas</button>
+  <button data-tab="caja">Caja</button>
+  <button data-tab="resumen">Resumen</button>
+</nav>
+<div id="sheetRoot"></div>
+<div id="toast" hidden></div>
+
+<script>
+const PL=10, PT=11; // precio plato: en local / para llevar
+const MEALS=[["d","Desayuno"],["a","Almuerzo"],["c","Cena"]];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const r2=n=>Math.round((n||0)*100)/100;
+const money=n=>"S/ "+r2(n).toFixed(2);
+const ds=(d=new Date())=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const fmt=d=>d?d.slice(8,10)+"/"+d.slice(5,7)+"/"+d.slice(0,4):"";
+const uid=()=>Math.random().toString(36).slice(2,9)+Date.now().toString(36);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const mealName=k=>(MEALS.find(m=>m[0]===k)||[,k])[1];
+const defMeal=()=>{const h=new Date().getHours();return h<11?"d":h<17?"a":"c";};
+
+let db=null, isAdmin=false, loaded=0;
+const S={pens:{},comidas:{},pagos:{},ventas:{},cajas:{},prods:{},extras:{}};
+const ui={tab:"hoy",date:ds(),meal:defMeal(),q:"",q2:"",vDate:ds(),rp:"hoy",rf:"",rt:"",cv:null,vMeal:defMeal(),vMethod:"efectivo",cDate:ds(),cd:{},mode:"platos"};
+
+// ---------- Escritura en cola (una a la vez por documento) ----------
+const queues={};
+function enqueue(key,fn){
+  queues[key]=(queues[key]||Promise.resolve()).then(fn).catch(()=>{toast("No se pudo guardar. Revisa tu conexión.");});
+  return queues[key];
+}
+let toastT;
+function toast(msg){const t=$("#toast");t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true;},3500);}
+
+// ---------- Cálculos ----------
+function cell(pid,date,meal){const d=S.comidas[date.slice(0,7)+"_"+pid];return(d&&d.days&&d.days[date]&&d.days[date][meal])||{l:0,t:0,v:0};}
+function calc(){
+  const per={};
+  for(const id in S.pens)per[id]={l:0,t:0,v:0,x:0,xq:0,paid:0};
+  for(const doc of Object.values(S.comidas)){const p=per[doc.pid];if(!p)continue;
+    for(const cells of Object.values(doc.days||{}))for(const c of Object.values(cells)){p.l+=c.l||0;p.t+=c.t||0;p.v+=c.v||0;}}
+  for(const doc of Object.values(S.extras)){const p=per[doc.pid];if(!p)continue;for(const items of Object.values(doc.days||{}))for(const c of Object.values(items)){p.xq+=c.q||0;p.x+=c.v||0;p.v+=c.v||0;}}
+  for(const g of Object.values(S.pagos)){const p=per[g.pid];if(p)p.paid+=g.amount||0;}
+  return per;
+}
+function consumoRango(pid,from,to){
+  const out={l:0,t:0,v:0,days:[]};
+  for(const doc of Object.values(S.comidas)){if(doc.pid!==pid)continue;
+    for(const [d,cells] of Object.entries(doc.days||{})){if((from&&d<from)||(to&&d>to))continue;
+      let any=false;
+      for(const c of Object.values(cells)){out.l+=c.l||0;out.t+=c.t||0;out.v+=c.v||0;if(c.l||c.t)any=true;}
+      if(any)out.days.push({d,cells});}}
+  out.days.sort((a,b)=>b.d.localeCompare(a.d));
+  return out;
+}
+function extrasRango(pid,from,to){
+  const out={q:0,v:0,days:[]};
+  for(const doc of Object.values(S.extras)){if(doc.pid!==pid)continue;
+    for(const [d,items] of Object.entries(doc.days||{})){if((from&&d<from)||(to&&d>to))continue;
+      let any=false;for(const c of Object.values(items)){out.q+=c.q||0;out.v+=c.v||0;if(c.q)any=true;}
+      if(any)out.days.push({d,items});}}
+  out.days.sort((a,b)=>b.d.localeCompare(a.d));return out;
+}
+const prodName=id=>(S.prods[id]&&S.prods[id].name)||"Producto";
+function rango(){
+  const t=ds();
+  if(ui.rp==="hoy")return[t,t];
+  if(ui.rp==="mes")return[t.slice(0,7)+"-01",t.slice(0,7)+"-31"];
+  if(ui.rp==="ant"){const n=new Date();const m=ds(new Date(n.getFullYear(),n.getMonth()-1,1)).slice(0,7);return[m+"-01",m+"-31"];}
+  return[ui.rf||"0000-00-00",ui.rt||"9999-99-99"];
+}
+function resumen(from,to){
+  const r={pen:{e:0,y:0},menu:{e:0,y:0},prod:{e:0,y:0},pl:0,pt:0,consumo:0,px:0};
+  for(const g of Object.values(S.pagos)){if(g.date<from||g.date>to)continue;r.pen[g.method==="yape"?"y":"e"]+=g.amount||0;}
+  for(const [date,doc] of Object.entries(S.ventas)){if(date<from||date>to)continue;
+    for(const e of Object.values(doc.entries||{})){if(e.void)continue;r[e.tipo==="prod"?"prod":"menu"][e.method==="yape"?"y":"e"]+=(e.qty||0)*(e.price||0);}}
+  for(const doc of Object.values(S.comidas))for(const [d,cells] of Object.entries(doc.days||{})){if(d<from||d>to)continue;
+    for(const c of Object.values(cells)){r.pl+=c.l||0;r.pt+=c.t||0;r.consumo+=c.v||0;}}
+  for(const doc of Object.values(S.extras))for(const [d,items] of Object.entries(doc.days||{})){if(d<from||d>to)continue;for(const c of Object.values(items)){r.px+=c.v||0;r.consumo+=c.v||0;}}
+  return r;
+}
+const tot=o=>o.e+o.y;
+
+// ---------- Vistas ----------
+function viewHoy(per){
+  const q=ui.q.trim().toLowerCase();
+  const all=Object.entries(S.pens).filter(([,p])=>p.active!==false).map(([id,p])=>({id,...p})).sort((a,b)=>a.name.localeCompare(b.name,"es"));
+  let tl=0,tt=0,tv=0;
+  for(const p of all){const c=cell(p.id,ui.date,ui.meal);tl+=c.l;tt+=c.t;tv+=c.v;}
+  const shown=all.filter(p=>p.name.toLowerCase().includes(q));
+  let h=`${modeChips()}<div class="ctrls">
+    <input id="hoy-date" type="date" value="${esc(ui.date)}" max="${esc(ds())}" aria-label="Fecha">
+    <div class="chips" role="group" aria-label="Comida">${MEALS.map(m=>`<button class="chip" data-a="meal" data-k="${m[0]}" aria-pressed="${ui.meal===m[0]}">${m[1]}</button>`).join("")}</div>
+    <input id="q" type="search" placeholder="Buscar pensionista…" value="${esc(ui.q)}" aria-label="Buscar pensionista">
+  </div>
+  <div class="sumbar"><span>${mealName(ui.meal)} ${ui.date===ds()?"de hoy":fmt(ui.date)}:</span><span><b>${tl}</b> en local</span><span><b>${tt}</b> para llevar</span><span><b>${money(tv)}</b></span></div>`;
+  if(!all.length){
+    return h+`<div class="empty">Aún no hay pensionistas.<br>Agrégalos en la pestaña <b>Pensionistas</b> (puedes pegar varios nombres a la vez).<div class="btns" style="justify-content:center;margin-top:12px"><button class="btn primary" data-a="addpens">+ Agregar pensionistas</button></div></div>`;
+  }
+  h+=`<div class="list">`;
+  for(const p of shown){
+    const c=cell(p.id,ui.date,ui.meal),pp=per[p.id]||{v:0,paid:0},debe=r2(pp.v-pp.paid);
+    h+=`<div class="card person"><div class="prow"><span class="pname">${esc(p.name)}</span>${debe>0?`<span class="tag debt">Debe ${money(debe)}</span>`:`<span class="tag ok">Al día</span>`}</div>
+      <div class="ctrs">
+        <div class="ctr"><span class="lbl">En local<br>${money(PL)}</span><button class="cb" data-a="bump" data-id="${esc(p.id)}" data-k="l" data-d="-1" aria-label="Quitar plato en local">−</button><span class="n">${c.l}</span><button class="cb plus" data-a="bump" data-id="${esc(p.id)}" data-k="l" data-d="1" aria-label="Agregar plato en local">+</button></div>
+        <div class="ctr"><span class="lbl">Para llevar<br>${money(PT)}</span><button class="cb" data-a="bump" data-id="${esc(p.id)}" data-k="t" data-d="-1" aria-label="Quitar plato para llevar">−</button><span class="n">${c.t}</span><button class="cb plus" data-a="bump" data-id="${esc(p.id)}" data-k="t" data-d="1" aria-label="Agregar plato para llevar">+</button></div>
+      </div></div>`;
+  }
+  if(!shown.length)h+=`<div class="empty">No hay ningún pensionista con «${esc(ui.q)}».<div class="btns" style="justify-content:center;margin-top:10px"><button class="btn primary" data-a="quickadd">Agregar «${esc(ui.q.trim())}»</button></div></div>`;
+  return h+`</div>`;
+}
+
+function viewPens(per){
+  const q=ui.q2.trim().toLowerCase();
+  const rows=Object.entries(S.pens).map(([id,p])=>({id,...p,...(per[id]||{l:0,t:0,v:0,paid:0})}))
+    .filter(p=>p.name.toLowerCase().includes(q))
+    .sort((a,b)=>((b.active!==false)-(a.active!==false))||(r2(b.v-b.paid)-r2(a.v-a.paid))||a.name.localeCompare(b.name,"es"));
+  let h=`<div class="ctrls"><input id="q2" type="search" placeholder="Buscar pensionista…" value="${esc(ui.q2)}" aria-label="Buscar pensionista"></div>
+    <div class="btns"><button class="btn primary" data-a="addpens">+ Agregar pensionistas</button></div>`;
+  if(!rows.length)return h+`<div class="empty">${Object.keys(S.pens).length?"Ninguno coincide con la búsqueda.":"Aún no hay pensionistas. Toca <b>+ Agregar pensionistas</b>."}</div>`;
+  const debeTot=rows.reduce((a,p)=>a+Math.max(0,r2(p.v-p.paid)),0);
+  h+=`<div class="sumbar"><span>Por cobrar en total: <b>${money(debeTot)}</b></span></div><div class="list">`;
+  for(const p of rows){
+    const debe=r2(p.v-p.paid);
+    h+=`<button class="lrow" data-a="pensdet" data-id="${esc(p.id)}" style="${p.active===false?"opacity:.55":""}"><span style="min-width:0"><span class="pname">${esc(p.name)}</span><br><span class="sub">${p.l+p.t} platos${p.active===false?" · inactivo":""}</span></span>${debe>0?`<span class="tag debt">Debe ${money(debe)}</span>`:debe<0?`<span class="tag ok">A favor ${money(-debe)}</span>`:`<span class="tag ok">Al día</span>`}</button>`;
+  }
+  return h+`</div>`;
+}
+
+function viewVentas(){
+  const doc=S.ventas[ui.vDate]||{};
+  const ents=Object.entries(doc.entries||{}).map(([id,e])=>({id,...e})).filter(e=>!e.void).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  let menu=0,prod=0,ef=0,ya=0;
+  for(const e of ents){const m=(e.qty||0)*(e.price||0);if(e.tipo==="prod")prod+=m;else menu+=m;if(e.method==="yape")ya+=m;else ef+=m;}
+  let h=`<div class="ctrls"><input id="v-date" type="date" value="${esc(ui.vDate)}" max="${esc(ds())}" aria-label="Fecha de ventas"></div>
+    <div class="card"><div class="sub" style="margin-bottom:8px">Anotar venta rápido (se guarda en la fecha de arriba)</div>
+      <div class="chips" role="group" aria-label="Comida">${MEALS.map(m=>`<button class="chip" data-a="vmeal" data-k="${m[0]}" aria-pressed="${ui.vMeal===m[0]}">${m[1]}</button>`).join("")}</div>
+      <div class="chips" style="margin-top:8px" role="group" aria-label="Método de pago"><button class="chip" data-a="vmeth" data-k="efectivo" aria-pressed="${ui.vMethod==="efectivo"}">Efectivo</button><button class="chip" data-a="vmeth" data-k="yape" aria-pressed="${ui.vMethod==="yape"}">Yape</button></div>
+      <div class="btns" style="margin-top:10px"><button class="btn primary" data-a="quick" data-p="${PL}">Menú ${money(PL)}</button><button class="btn primary" data-a="quick" data-p="${PT}">Llevar ${money(PT)}</button></div>
+      <div class="btns" style="margin-top:8px"><button class="btn primary" data-a="sell">Vender producto de la lista</button><button class="btn" data-a="addventa">Otro precio o extra</button></div></div>
+    <div class="card"><div class="kv"><span>Menú</span><span>${money(menu)}</span></div><div class="kv"><span>Productos</span><span>${money(prod)}</span></div><div class="kv"><span><b>Total del día</b></span><span>${money(menu+prod)}</span></div><div class="kv sub2"><span>Efectivo</span><span>${money(ef)}</span></div><div class="kv sub2"><span>Yape</span><span>${money(ya)}</span></div></div>`;
+  if(!ents.length)return h+`<div class="empty">Aún no hay ventas ${ui.vDate===ds()?"hoy":"en esta fecha"}.<br>Toca <b>+ Registrar venta</b> para anotar la primera.</div>`;
+  h+=`<div class="list">`;
+  for(const e of ents){
+    const m=(e.qty||0)*(e.price||0);
+    h+=`<div class="lrow static"><span style="min-width:0"><span class="pname">${esc(e.name||(e.tipo==="prod"?"Producto":"Menú"))}</span><br><span class="sub">${e.tipo==="prod"?"Producto":"Menú"} · ${e.qty} × ${money(e.price)} · ${e.method==="yape"?"Yape":"Efectivo"}${e.meal?" · "+mealName(e.meal):""}</span></span>
+      <span style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><b class="num">${money(m)}</b>
+      ${ui.cv===e.id?`<button class="btn danger" data-a="voidyes" data-id="${esc(e.id)}">Confirmar anular</button>`:`<button class="btn" data-a="voidask" data-id="${esc(e.id)}">Anular</button>`}</span></div>`;
+  }
+  return h+`</div>`;
+}
+
+function viewResumen(per){
+  const [from,to]=rango(),r=resumen(from,to);
+  const ing=tot(r.pen)+tot(r.menu)+tot(r.prod),ef=r.pen.e+r.menu.e+r.prod.e,ya=r.pen.y+r.menu.y+r.prod.y;
+  const porCobrar=Object.values(per).reduce((a,p)=>a+Math.max(0,r2(p.v-p.paid)),0);
+  const P=(k,t)=>`<button class="chip" data-a="rp" data-k="${k}" aria-pressed="${ui.rp===k}">${t}</button>`;
+  return `<div class="chips" role="group" aria-label="Periodo">${P("hoy","Hoy")}${P("mes","Este mes")}${P("ant","Mes pasado")}${P("rango","Elegir fechas")}</div>
+    ${ui.rp==="rango"?`<div class="grid2"><label class="field">Desde<input id="r-from" type="date" value="${esc(ui.rf)}"></label><label class="field">Hasta<input id="r-to" type="date" value="${esc(ui.rt)}"></label></div>`:`<div class="sub">${from===to?fmt(from):fmt(from)+" al "+fmt(to.endsWith("-31")?to.slice(0,7)+"-"+String(new Date(+to.slice(0,4),+to.slice(5,7),0).getDate()).padStart(2,"0"):to)}</div>`}
+    <div class="card"><div class="sub">Dinero que entró</div><div class="big">${money(ing)}</div></div>
+    <div class="card"><div class="kv"><span>Pensiones cobradas</span><span>${money(tot(r.pen))}</span></div>
+      <div class="kv"><span>Ventas de menú</span><span>${money(tot(r.menu))}</span></div>
+      <div class="kv"><span>Ventas de productos</span><span>${money(tot(r.prod))}</span></div>
+      <div class="kv sub2"><span>En efectivo</span><span>${money(ef)}</span></div>
+      <div class="kv sub2"><span>Por Yape</span><span>${money(ya)}</span></div></div>
+    <div class="card"><div class="sub" style="margin-bottom:4px">Pensionistas</div>
+      <div class="kv"><span>Platos comidos en el periodo</span><span>${r.pl+r.pt}</span></div>
+      <div class="kv sub2"><span>En local / para llevar</span><span>${r.pl} / ${r.pt}</span></div>
+      <div class="kv sub2"><span>Productos a cuenta</span><span>${money(r.px)}</span></div>
+      <div class="kv"><span>Consumo del periodo</span><span>${money(r.consumo)}</span></div>
+      <div class="kv"><span>Por cobrar (acumulado)</span><span>${money(porCobrar)}</span></div></div>
+    ${viewDias()}
+    <p class="note">«Dinero que entró» cuenta solo lo cobrado: pagos de pensionistas y ventas. El consumo de pensionistas que aún no pagaron aparece en «Por cobrar».</p>`;
+}
+
+function viewDias(){
+  const nom=["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"],by={},ag=nom.map(()=>({t:0,n:0}));
+  const add=(d,q)=>{by[d]=(by[d]||0)+q;};
+  for(const doc of Object.values(S.comidas))for(const [d,cells] of Object.entries(doc.days||{}))for(const c of Object.values(cells))add(d,(c.l||0)+(c.t||0));
+  for(const [d,doc] of Object.entries(S.ventas))for(const e of Object.values(doc.entries||{}))if(!e.void&&e.tipo!=="prod")add(d,e.qty||0);
+  let total=0;
+  for(const [d,q] of Object.entries(by)){if(q<=0)continue;const w=new Date(+d.slice(0,4),+d.slice(5,7)-1,+d.slice(8,10)).getDay();ag[w].t+=q;ag[w].n++;total+=q;}
+  if(!total)return `<div class="card"><div class="sub">Platos en total (todo el historial)</div><div class="big">0</div><p class="note">Cuando registres platos, aquí verás qué día se vende más y cuál es el más bajo.</p></div>`;
+  const rows=[1,2,3,4,5,6,0].map(w=>({w,nombre:nom[w],t:ag[w].t,n:ag[w].n,avg:ag[w].n?ag[w].t/ag[w].n:0}));
+  const con=rows.filter(r=>r.n>0),max=Math.max(1,...con.map(r=>r.avg));
+  let best=null,worst=null;
+  if(con.length>=2){best=con.reduce((a,b)=>b.avg>a.avg?b:a);worst=con.reduce((a,b)=>b.avg<a.avg?b:a);if(best.avg===worst.avg)best=worst=null;}
+  const f1=n=>(Math.round(n*10)/10).toString();
+  return `<div class="card"><div class="sub">Platos en total (todo el historial)</div><div class="big">${total}</div>
+    ${best?`<div class="kv"><span>Día que más se vende</span><span><span class="tag ok">${best.nombre}</span> ${f1(best.avg)} por día</span></div><div class="kv"><span>Día más bajo</span><span><span class="tag debt">${worst.nombre}</span> ${f1(worst.avg)} por día</span></div>`:`<p class="note">Cuando haya platos en más de un día de la semana, aquí verás el mejor y el más bajo.</p>`}
+    <div style="margin-top:6px">${rows.map(r=>`<div class="drow"><div class="prow"><span>${r.nombre}</span><span class="sub num">${r.n?`${f1(r.avg)} por día · ${r.t} en total · ${r.n} ${r.n===1?"día":"días"}`:"sin datos"}</span></div><div class="bar"><i class="${best&&r.w===best.w?"best":worst&&r.w===worst.w?"worst":""}" style="width:${r.n?Math.max(3,Math.round(r.avg/max*100)):0}%"></i></div></div>`).join("")}</div>
+    <p class="note">Cuenta los platos de pensionistas (en local y para llevar) y las ventas de menú. Se compara el promedio por día, para que un día de la semana con más fechas registradas no gane por tener más semanas.</p></div>`;
+}
+
+function cajaBloque(date,meal){
+  const r={e:{menu:0,prod:0,pen:0},y:{menu:0,prod:0,pen:0},platos:0};
+  const doc=S.ventas[date];
+  for(const e of Object.values((doc&&doc.entries)||{})){
+    if(e.void||(e.meal||"")!==meal)continue;
+    r[e.method==="yape"?"y":"e"][e.tipo==="prod"?"prod":"menu"]+=(e.qty||0)*(e.price||0);
+  }
+  for(const g of Object.values(S.pagos)){
+    if(g.date!==date||(g.meal||"")!==meal)continue;
+    r[g.method==="yape"?"y":"e"].pen+=g.amount||0;
+  }
+  if(meal)for(const d of Object.values(S.comidas)){const c=d.days&&d.days[date]&&d.days[date][meal];if(c)r.platos+=(c.l||0)+(c.t||0);}
+  return r;
+}
+const sm=o=>o.menu+o.prod+o.pen;
+function dtag(d){d=r2(d);return d===0?`<span class="tag ok">Cuadra</span>`:d>0?`<span class="tag ok">Sobra ${money(d)}</span>`:`<span class="tag debt">Falta ${money(-d)}</span>`;}
+function viewCaja(){
+  const date=ui.cDate,caja=S.cajas[date]||{};
+  const saved=(m,k)=>{const v=(caja[m]||{})[k];return v==null?null:v;};
+  const val=(m,k)=>{const key=date+"|"+m+"|"+k;if(key in ui.cd)return ui.cd[key];const v=saved(m,k);return v==null?"":v;};
+  let totEe=0,totEy=0,cntE=0,cntY=0,expE=0,expY=0,hasE=false,hasY=false,cards="";
+  for(const m of [...MEALS.map(x=>x[0]),""]){
+    const r=cajaBloque(date,m),ee=sm(r.e),ey=sm(r.y);
+    totEe+=ee;totEy+=ey;
+    if(!m){
+      if(ee||ey)cards+=`<div class="card"><h2>Sin comida asignada</h2><div class="kv"><span>Efectivo</span><span>${money(ee)}</span></div><div class="kv"><span>Yape</span><span>${money(ey)}</span></div><p class="note">Son ventas o cobros anotados antes de elegir la comida. Entran en el total del día.</p></div>`;
+      continue;
+    }
+    const ce=saved(m,"e"),cy=saved(m,"y");
+    if(ce!=null){cntE+=ce;expE+=ee;hasE=true;}
+    if(cy!=null){cntY+=cy;expY+=ey;hasY=true;}
+    cards+=`<div class="card"><h2>${mealName(m)}</h2>
+      <div class="kv"><span>Menú (efectivo)</span><span>${money(r.e.menu)}</span></div>
+      <div class="kv"><span>Productos (efectivo)</span><span>${money(r.e.prod)}</span></div>
+      <div class="kv"><span>Cobros de pensionistas (efectivo)</span><span>${money(r.e.pen)}</span></div>
+      <div class="kv"><span><b>Efectivo esperado</b></span><span>${money(ee)}</span></div>
+      <label class="field" style="margin-top:8px">Efectivo contado (S/)<input type="number" min="0" step="0.01" inputmode="decimal" id="cj-${m}-e" data-cj="${date}|${m}|e" value="${esc(val(m,"e"))}"></label>
+      ${ce!=null?`<div class="kv"><span>Resultado en efectivo</span><span>${dtag(ce-ee)}</span></div>`:""}
+      <div class="kv" style="margin-top:6px"><span><b>Yape esperado</b></span><span>${money(ey)}</span></div>
+      <label class="field">Yape recibido, según tu celular (S/)<input type="number" min="0" step="0.01" inputmode="decimal" id="cj-${m}-y" data-cj="${date}|${m}|y" value="${esc(val(m,"y"))}"></label>
+      ${cy!=null?`<div class="kv"><span>Resultado en Yape</span><span>${dtag(cy-ey)}</span></div>`:""}
+      ${r.platos?`<p class="note">${r.platos} platos de pensionistas en esta comida (se cobran después, no entran a la caja).</p>`:""}</div>`;
+  }
+  return `<div class="ctrls"><input id="c-date" type="date" value="${esc(date)}" max="${esc(ds())}" aria-label="Fecha de la caja"></div>
+    ${cards}
+    <div class="card"><h2>Total del día</h2>
+      <div class="kv"><span>Efectivo esperado</span><span>${money(totEe)}</span></div>
+      <div class="kv"><span>Yape esperado</span><span>${money(totEy)}</span></div>
+      ${hasE?`<div class="kv"><span>Efectivo contado</span><span>${money(cntE)}</span></div><div class="kv"><span>Resultado en efectivo</span><span>${dtag(cntE-expE)}</span></div>`:""}
+      ${hasY?`<div class="kv"><span>Yape recibido</span><span>${money(cntY)}</span></div><div class="kv"><span>Resultado en Yape</span><span>${dtag(cntY-expY)}</span></div>`:""}
+      <p class="note">El resultado compara solo las comidas donde escribiste lo contado. Si empiezas con sencillo en la caja, réstalo antes de escribir el efectivo contado.</p></div>`;
+}
+function saveCaja(el){
+  const key=el.dataset.cj,[date,meal,k]=key.split("|"),raw=el.value.trim(),val=raw===""?null:r2(+raw);
+  if(val!==null&&!(val>=0)){toast("Escribe un monto válido.");return;}
+  delete ui.cd[key];
+  const doc=S.cajas[date]||(S.cajas[date]={});
+  doc[meal]={...(doc[meal]||{}),[k]:val};
+  render();
+  enqueue("j"+date,async()=>{
+    const patch={[meal]:{[k]:val}};
+    try{await db.doc("cajas/"+date).update(patch);}
+    catch(x){if(x&&x.code==="invalid_argument")await db.doc("cajas/"+date).set(patch);else throw x;}
+  });
+}
+
+function modeChips(){return `<div class="chips" role="group" aria-label="Qué anotar"><button class="chip" data-a="mode" data-k="platos" aria-pressed="${ui.mode==="platos"}">Platos</button><button class="chip" data-a="mode" data-k="prod" aria-pressed="${ui.mode==="prod"}">Productos (gaseosa, galleta…)</button></div>`;}
+function xcell(pid,date,prodId){const d=S.extras[date.slice(0,7)+"_"+pid];return(d&&d.days&&d.days[date]&&d.days[date][prodId])||{q:0,v:0};}
+function viewHoyProd(per){
+  const q=ui.q.trim().toLowerCase();
+  const prods=Object.entries(S.prods).filter(([,p])=>p.active!==false).map(([id,p])=>({id,...p})).sort((a,b)=>a.name.localeCompare(b.name,"es"));
+  const all=Object.entries(S.pens).filter(([,p])=>p.active!==false).map(([id,p])=>({id,...p})).sort((a,b)=>a.name.localeCompare(b.name,"es"));
+  let tq=0,tv=0;
+  for(const p of all)for(const pr of prods){const c=xcell(p.id,ui.date,pr.id);tq+=c.q;tv+=c.v;}
+  const h=`${modeChips()}<div class="ctrls">
+    <input id="hoy-date" type="date" value="${esc(ui.date)}" max="${esc(ds())}" aria-label="Fecha">
+    <input id="q" type="search" placeholder="Buscar pensionista…" value="${esc(ui.q)}" aria-label="Buscar pensionista"></div>
+    <div class="sumbar"><span>Productos ${ui.date===ds()?"de hoy":fmt(ui.date)}:</span><span><b>${tq}</b> unidades</span><span><b>${money(tv)}</b></span></div>
+    <div class="btns"><button class="btn" data-a="prods">Administrar productos y precios</button></div>`;
+  if(!prods.length)return h+`<div class="empty">Todavía no hay productos.<br>Agrega los que venden a los pensionistas (gaseosa, galleta…) con su precio.<div class="btns" style="justify-content:center;margin-top:12px"><button class="btn primary" data-a="prods">+ Agregar productos</button></div></div>`;
+  if(!all.length)return h+`<div class="empty">Aún no hay pensionistas. Agrégalos en la pestaña <b>Pensionistas</b>.</div>`;
+  const shown=all.filter(p=>p.name.toLowerCase().includes(q));
+  let out=h+`<div class="list">`;
+  for(const p of shown){
+    const pp=per[p.id]||{v:0,paid:0},debe=r2(pp.v-pp.paid);
+    const hoy=Object.entries(S.prods).map(([id,x])=>({x,c:xcell(p.id,ui.date,id)})).filter(t=>t.c.q);
+    out+=`<button class="lrow" data-a="pick" data-id="${esc(p.id)}"${hoy.length?' style="background:var(--accent-soft)"':''}><span style="min-width:0"><span class="pname">${esc(p.name)}</span><br><span class="sub">${hoy.length?esc(hoy.map(t=>t.x.name+" "+t.c.q).join(" \u00b7 ")):"Toca para anotar un producto"}</span></span>${debe>0?`<span class="tag debt">Debe ${money(debe)}</span>`:`<span class="tag ok">Al d\u00eda</span>`}</button>`;
+  }
+  if(!shown.length)out+=`<div class="empty">No hay ningún pensionista con «${esc(ui.q)}».</div>`;
+  return out+`</div>`;
+}
+function stepChips(id,step){return `<div class="chips" id="${id}" role="group" aria-label="Cantidad por toque"><span class="sub" style="align-self:center">Por toque:</span>${[1,2,3,5,10].map(n=>`<button type="button" class="chip" data-st="${n}" aria-pressed="${n===step}" style="min-width:52px;min-height:46px;font-size:1rem">×${n}</button>`).join("")}</div>`;}
+function prodRow(x,n,add,sub){return `<div class="lrow static" style="padding:0;overflow:hidden;gap:0;min-height:68px"><button type="button" ${add}="${esc(x.id)}" style="flex:1;min-width:0;text-align:left;font:inherit;font-size:1.05rem;color:var(--fg);background:${n?"var(--accent-soft)":"none"};border:0;padding:16px 12px;cursor:pointer;align-self:stretch"><b>${esc(x.name)}</b><br><span class="sub">${money(x.price)}</span></button>${n?`<span style="font-family:var(--display);font-weight:800;font-size:1.5rem;padding:0 12px">${n}</span><button type="button" class="cb" ${sub}="${esc(x.id)}" aria-label="Quitar ${esc(x.name)}" style="width:56px;height:56px;margin-right:8px;font-size:1.7rem">−</button>`:""}</div>`;}
+function setStep(f,boxId,b){f.querySelectorAll("#"+boxId+" [data-st]").forEach(x=>x.setAttribute("aria-pressed",x===b));}
+function pickSheet(pid){
+  const p=S.pens[pid];if(!p)return;
+  let q="",step=1;
+  const use={};
+  for(const doc of Object.values(S.extras))for(const items of Object.values(doc.days||{}))for(const [id,c] of Object.entries(items))use[id]=(use[id]||0)+(c.q||0);
+  const prods=()=>Object.entries(S.prods).filter(([,x])=>x.active!==false).map(([id,x])=>({id,...x})).sort((a,b)=>(use[b.id]||0)-(use[a.id]||0)||a.name.localeCompare(b.name,"es"));
+  openSheet(`<h2>${esc(p.name)}</h2>
+    <p class="note">Productos del ${ui.date===ds()?"día de hoy":fmt(ui.date)}. Elige cuántos por toque y toca el producto. Los más usados salen primero.</p>
+    ${stepChips("pk-step",step)}
+    <input id="pk-q" type="search" placeholder="Buscar producto…" aria-label="Buscar producto">
+    <div class="list" id="pk-list"></div>
+    <div class="btns"><button class="btn primary" type="submit" id="pk-done" style="min-height:48px;flex:1">Listo</button></div>`,f=>{
+    const draw=()=>{
+      const list=prods().filter(x=>x.name.toLowerCase().includes(q));
+      f.querySelector("#pk-list").innerHTML=list.length?list.map(x=>prodRow(x,xcell(pid,ui.date,x.id).q,"data-pk","data-pm")).join(""):`<div class="empty">${Object.keys(S.prods).length?"Ningún producto coincide.":"Aún no hay productos. Agrégalos en «Administrar productos y precios»."}</div>`;
+    };
+    draw();
+    f.querySelector("#pk-step").onclick=e=>{const b=e.target.closest("[data-st]");if(b){step=+b.dataset.st;setStep(f,"pk-step",b);}};
+    f.querySelector("#pk-q").oninput=e=>{q=e.target.value.trim().toLowerCase();draw();};
+    f.querySelector("#pk-list").onclick=e=>{const a=e.target.closest("[data-pk]"),m=e.target.closest("[data-pm]");if(a){bumpx(pid,a.dataset.pk,step);draw();}else if(m){bumpx(pid,m.dataset.pm,-step);draw();}};
+    f.onsubmit=e=>{e.preventDefault();closeSheet();};
+  });
+}
+function bumpVp(prodId,delta){
+  const pr=S.prods[prodId];if(!pr)return;
+  const date=ui.vDate,eid=["q",prodId,ui.vMeal,ui.vMethod].join("_");
+  const doc=S.ventas[date]||(S.ventas[date]={date,entries:{}});
+  doc.entries=doc.entries||{};
+  const cur=doc.entries[eid],live=cur&&!cur.void,q0=live?(cur.qty||0):0;
+  if(delta<0&&!q0)return;
+  const q=q0+delta;
+  const entry=q>0?{tipo:"prod",name:pr.name,qty:q,price:live?(cur.price||pr.price):pr.price,method:ui.vMethod,meal:ui.vMeal,createdAt:live?(cur.createdAt||Date.now()):Date.now(),void:false}:{void:true};
+  doc.entries[eid]=q>0?entry:{...cur,void:true};
+  render();
+  enqueue("v"+date,async()=>{
+    try{await db.doc("ventas/"+date).update({entries:{[eid]:entry}});}
+    catch(x){if(x&&x.code==="invalid_argument")await db.doc("ventas/"+date).set({date,entries:{[eid]:entry}});else throw x;}
+  });
+}
+function sellSheet(){
+  let q="",step=1;
+  const use={};
+  for(const doc of Object.values(S.extras))for(const items of Object.values(doc.days||{}))for(const [id,c] of Object.entries(items))use[id]=(use[id]||0)+(c.q||0);
+  const prods=()=>Object.entries(S.prods).filter(([,x])=>x.active!==false).map(([id,x])=>({id,...x})).sort((a,b)=>(use[b.id]||0)-(use[a.id]||0)||a.name.localeCompare(b.name,"es"));
+  const qty=id=>{const e=((S.ventas[ui.vDate]||{}).entries||{})[["q",id,ui.vMeal,ui.vMethod].join("_")];return e&&!e.void?(e.qty||0):0;};
+  openSheet(`<h2>Vender producto</h2>
+    <p class="note">${mealName(ui.vMeal)} · ${ui.vMethod==="yape"?"Yape":"Efectivo"} · ${ui.vDate===ds()?"hoy":fmt(ui.vDate)}. Para cambiar la comida o el método, cierra y cámbialos en Ventas. Elige cuántos por toque y toca el producto.</p>
+    ${stepChips("sl-step",step)}
+    <input id="sl-q" type="search" placeholder="Buscar producto…" aria-label="Buscar producto">
+    <div class="list" id="sl-list"></div>
+    <div class="btns"><button class="btn primary" type="submit" id="sl-done" style="min-height:48px;flex:1">Listo</button></div>`,f=>{
+    const draw=()=>{
+      const list=prods().filter(x=>x.name.toLowerCase().includes(q));
+      f.querySelector("#sl-list").innerHTML=list.length?list.map(x=>prodRow(x,qty(x.id),"data-sp","data-sm")).join(""):`<div class="empty">${Object.keys(S.prods).length?"Ningún producto coincide.":"Aún no hay productos. Agrégalos en Hoy → Productos → Administrar productos y precios."}</div>`;
+    };
+    draw();
+    f.querySelector("#sl-step").onclick=e=>{const b=e.target.closest("[data-st]");if(b){step=+b.dataset.st;setStep(f,"sl-step",b);}};
+    f.querySelector("#sl-q").oninput=e=>{q=e.target.value.trim().toLowerCase();draw();};
+    f.querySelector("#sl-list").onclick=e=>{const a=e.target.closest("[data-sp]"),m=e.target.closest("[data-sm]");if(a){bumpVp(a.dataset.sp,step);draw();}else if(m){bumpVp(m.dataset.sm,-step);draw();}};
+    f.onsubmit=e=>{e.preventDefault();closeSheet();};
+  });
+}
+function bumpx(pid,prodId,delta){
+  const pr=S.prods[prodId];if(!pr)return;
+  const date=ui.date,month=date.slice(0,7),id=month+"_"+pid;
+  const doc=S.extras[id]||(S.extras[id]={pid,month,days:{}});
+  doc.days=doc.days||{};const day=doc.days[date]||(doc.days[date]={});
+  const c={q:0,v:0,...(day[prodId]||{})};
+  if(delta<0&&!c.q)return;
+  if(delta<0)delta=-Math.min(-delta,c.q);
+  c.q+=delta;c.v=Math.max(0,r2(c.v+delta*(pr.price||0)));if(!c.q)c.v=0;
+  day[prodId]=c;render();
+  const payload={days:{[date]:{[prodId]:{...c}}}};
+  enqueue("x"+id,async()=>{
+    try{await db.doc("extras/"+id).update(payload);}
+    catch(e){if(e&&e.code==="invalid_argument")await db.doc("extras/"+id).set({pid,month,...payload});else throw e;}
+  });
+}
+function addProd(name,price){const id=uid(),p={name,price:r2(price),active:true,createdAt:Date.now()};S.prods[id]=p;render();enqueue("r"+id,()=>db.doc("productos/"+id).set(p));}
+function patchProd(id,patch){Object.assign(S.prods[id],patch);render();enqueue("r"+id,()=>db.doc("productos/"+id).update(patch));}
+function prodSheet(){
+  const list=Object.entries(S.prods).map(([id,p])=>({id,...p})).sort((a,b)=>((b.active!==false)-(a.active!==false))||a.name.localeCompare(b.name,"es"));
+  openSheet(`<h2>Productos para pensionistas</h2>
+    <p class="note">Pon el precio de cada producto. Si lo cambias, lo ya anotado conserva el precio anterior.</p>
+    ${list.map(p=>`<div class="card" style="${p.active===false?"opacity:.55":""}"><div class="prow"><b>${esc(p.name)}</b>${p.active===false?`<span class="tag">archivado</span>`:""}</div>
+      <div class="grid2" style="margin-top:6px"><label class="field">Precio (S/)<input type="number" min="0.01" step="0.01" inputmode="decimal" id="pp-${esc(p.id)}" value="${esc(p.price)}"></label>
+      <div class="btns" style="align-self:end"><button class="btn" type="button" data-ps="${esc(p.id)}">Guardar</button><button class="btn" type="button" data-pa="${esc(p.id)}">${p.active===false?"Activar":"Archivar"}</button></div></div></div>`).join("")}
+    <h2>Agregar producto</h2>
+    <div class="grid2"><label class="field">Nombre<input id="np-name" maxlength="40" placeholder="Ej. Gaseosa"></label><label class="field">Precio (S/)<input id="np-price" type="number" min="0.01" step="0.01" inputmode="decimal"></label></div>
+    <div class="err" id="np-err"></div>
+    <div class="btns"><button class="btn primary" type="submit">Agregar</button><button class="btn" type="button" id="np-close">Cerrar</button></div>`,f=>{
+    f.querySelector("#np-close").onclick=closeSheet;
+    f.querySelectorAll("[data-ps]").forEach(b=>b.onclick=()=>{const pr=+f.querySelector("#pp-"+b.dataset.ps).value;if(!(pr>0)){toast("Escribe un precio mayor a 0.");return;}patchProd(b.dataset.ps,{price:r2(pr)});toast("Precio guardado");prodSheet();});
+    f.querySelectorAll("[data-pa]").forEach(b=>b.onclick=()=>{const p=S.prods[b.dataset.pa];patchProd(b.dataset.pa,{active:p.active===false});prodSheet();});
+    f.onsubmit=e=>{e.preventDefault();
+      const n=f.querySelector("#np-name").value.trim(),pr=+f.querySelector("#np-price").value,err=f.querySelector("#np-err");
+      if(!n){err.textContent="Escribe el nombre del producto.";return;}
+      if(!(pr>0)){err.textContent="Escribe un precio mayor a 0.";return;}
+      if(Object.values(S.prods).some(p=>p.name.toLowerCase()===n.toLowerCase())){err.textContent="Ese producto ya existe.";return;}
+      addProd(n,pr);toast("Producto agregado");prodSheet();
+    };
+  });
+}
+
+// ---------- Render ----------
+function render(){
+  if(!isAdmin||!db)return;
+  const a=document.activeElement,fid=a&&a.id&&$("#app").contains(a)?a.id:null,ss=fid&&a.selectionStart,se=fid&&a.selectionEnd;
+  const per=calc();
+  $("#app").innerHTML=loaded<7?`<div class="empty">Cargando datos…</div>`:ui.tab==="hoy"?(ui.mode==="prod"?viewHoyProd(per):viewHoy(per)):ui.tab==="pens"?viewPens(per):ui.tab==="ventas"?viewVentas():ui.tab==="caja"?viewCaja():viewResumen(per);
+  document.querySelectorAll("#nav button").forEach(b=>b.setAttribute("aria-current",b.dataset.tab===ui.tab?"page":"false"));
+  if(fid){const el=document.getElementById(fid);if(el){el.focus();try{el.setSelectionRange(ss,se);}catch(e){}}}
+}
+
+// ---------- Acciones de datos ----------
+function bump(pid,k,delta){
+  const date=ui.date,meal=ui.meal,month=date.slice(0,7),id=month+"_"+pid;
+  const doc=S.comidas[id]||(S.comidas[id]={pid,month,days:{}});
+  doc.days=doc.days||{};
+  const day=doc.days[date]||(doc.days[date]={});
+  const c={l:0,t:0,v:0,...(day[meal]||{})};
+  if(delta<0&&!c[k])return;
+  c[k]+=delta;c.v=Math.max(0,r2(c.v+delta*(k==="l"?PL:PT)));if(!c.l&&!c.t)c.v=0;
+  day[meal]=c;render();
+  const payload={days:{[date]:{[meal]:{...c}}}};
+  enqueue("c"+id,async()=>{
+    try{await db.doc("comidas/"+id).update(payload);}
+    catch(e){if(e&&e.code==="invalid_argument")await db.doc("comidas/"+id).set({pid,month,...payload});else throw e;}
+  });
+}
+function addVenta(date,e){
+  const id=uid(),entry={...e,createdAt:Date.now()};
+  const doc=S.ventas[date]||(S.ventas[date]={date,entries:{}});
+  doc.entries=doc.entries||{};doc.entries[id]=entry;render();
+  enqueue("v"+date,async()=>{
+    try{await db.doc("ventas/"+date).update({entries:{[id]:entry}});}
+    catch(x){if(x&&x.code==="invalid_argument")await db.doc("ventas/"+date).set({date,entries:{[id]:entry}});else throw x;}
+  });
+}
+function voidVenta(date,id){
+  const doc=S.ventas[date];if(!doc||!doc.entries||!doc.entries[id])return;
+  doc.entries[id].void=true;ui.cv=null;render();
+  enqueue("v"+date,()=>db.doc("ventas/"+date).update({entries:{[id]:{void:true}}}));
+}
+function addPens(names){
+  const list=[...new Set(names.map(n=>n.trim()).filter(Boolean))];
+  const known=new Set(Object.values(S.pens).map(p=>p.name.toLowerCase()));
+  const nuevos=list.filter(n=>!known.has(n.toLowerCase()));
+  for(const name of nuevos){
+    const id=uid(),p={name,active:true,createdAt:Date.now()};
+    S.pens[id]=p;
+    enqueue("p"+id,()=>db.doc("pensionistas/"+id).set(p));
+  }
+  render();
+  return {added:nuevos.length,skipped:list.length-nuevos.length};
+}
+function addPago(pid,amount,method,date,meal){
+  const id=uid(),g={pid,amount:r2(amount),method,date,meal,createdAt:Date.now()};
+  S.pagos[id]=g;render();
+  enqueue("g"+id,()=>db.doc("pagos/"+id).set(g));
+}
+function delPago(id){delete S.pagos[id];render();enqueue("g"+id,()=>db.doc("pagos/"+id).delete());}
+function patchPens(id,patch){Object.assign(S.pens[id],patch);render();enqueue("p"+id,()=>db.doc("pensionistas/"+id).update(patch));}
+
+// ---------- Hojas ----------
+function closeSheet(){$("#sheetRoot").innerHTML="";}
+function openSheet(html,ready){
+  $("#sheetRoot").innerHTML=`<div class="sheet-bg" id="bg"><form class="sheet" id="sheet">${html}</form></div>`;
+  $("#bg").addEventListener("click",e=>{if(e.target.id==="bg")closeSheet();});
+  const f=$("#sheet");f.addEventListener("submit",e=>e.preventDefault());ready(f);
+}
+
+function addPensSheet(prefill){
+  openSheet(`<h2>Agregar pensionistas</h2>
+    <label class="field">Un nombre por línea (puedes pegar varios)<textarea id="ap-names" rows="6" placeholder="Juan Pérez&#10;María Rojas">${esc(prefill||"")}</textarea></label>
+    <div class="err" id="ap-err"></div>
+    <div class="btns"><button class="btn primary" type="submit" id="ap-save">Guardar</button><button class="btn" type="button" id="ap-cancel">Cancelar</button></div>`,f=>{
+    f.querySelector("#ap-cancel").onclick=closeSheet;
+    f.onsubmit=e=>{e.preventDefault();
+      const names=f.querySelector("#ap-names").value.split("\n");
+      if(!names.some(n=>n.trim())){f.querySelector("#ap-err").textContent="Escribe al menos un nombre.";return;}
+      const r=addPens(names);closeSheet();
+      toast(r.added?`Se agregaron ${r.added}`+(r.skipped?` (${r.skipped} ya existían)`:""):"Ya existían todos esos nombres");
+    };
+    f.querySelector("#ap-names").focus();
+  });
+}
+
+function payFormSheet(pid){
+  const p=S.pens[pid],pp=calc()[pid]||{v:0,paid:0},debe=Math.max(0,r2(pp.v-pp.paid));
+  openSheet(`<h2>Registrar pago: ${esc(p.name)}</h2>
+    <p class="note">Debe ahora: <b>${money(debe)}</b></p>
+    <div class="grid2"><label class="field">Monto (S/)<input id="pg-amt" type="number" step="0.01" min="0.01" inputmode="decimal" required value="${debe>0?debe:""}"></label>
+    <label class="field">Método<select id="pg-m"><option value="efectivo">Efectivo</option><option value="yape">Yape</option></select></label></div>
+    <div class="grid2"><label class="field">Fecha<input id="pg-d" type="date" value="${esc(ds())}" max="${esc(ds())}" required></label>
+    <label class="field">Comida<select id="pg-meal">${MEALS.map(m=>`<option value="${m[0]}"${m[0]===defMeal()?" selected":""}>${m[1]}</option>`).join("")}</select></label></div>
+    <div class="err" id="pg-err"></div>
+    <div class="btns"><button class="btn primary" type="submit">Guardar pago</button><button class="btn" type="button" id="pg-back">Volver</button></div>`,f=>{
+    f.querySelector("#pg-back").onclick=()=>pensSheet(pid);
+    f.onsubmit=e=>{e.preventDefault();
+      const amt=+f.querySelector("#pg-amt").value,d=f.querySelector("#pg-d").value;
+      if(!(amt>0)){f.querySelector("#pg-err").textContent="Escribe un monto mayor a 0.";return;}
+      if(!d){f.querySelector("#pg-err").textContent="Elige la fecha del pago.";return;}
+      addPago(pid,amt,f.querySelector("#pg-m").value,d,f.querySelector("#pg-meal").value);toast("Pago registrado");pensSheet(pid);
+    };
+    f.querySelector("#pg-amt").focus();
+  });
+}
+
+function pensSheet(pid,from="",to="",confirmDel=null){
+  const p=S.pens[pid];if(!p){closeSheet();return;}
+  const pp=calc()[pid]||{l:0,t:0,v:0,paid:0},saldo=r2(pp.v-pp.paid),cr=consumoRango(pid,from,to),ex=extrasRango(pid,from,to);
+  const pagos=Object.entries(S.pagos).filter(([,g])=>g.pid===pid).map(([id,g])=>({id,...g})).sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||0)-(a.createdAt||0));
+  openSheet(`<h2>${esc(p.name)}</h2>
+    <div class="grid3"><div class="stat"><small>Consumido</small><b>${money(pp.v)}</b></div><div class="stat"><small>Pagado</small><b>${money(pp.paid)}</b></div><div class="stat"><small>${saldo<0?"A favor":"Debe"}</small><b>${money(Math.abs(saldo))}</b></div></div>
+    <div class="btns"><button class="btn primary" type="button" id="pd-pay">Registrar pago</button></div>
+    <div class="grid2"><label class="field">Desde<input id="pd-from" type="date" value="${esc(from)}"></label><label class="field">Hasta<input id="pd-to" type="date" value="${esc(to)}"></label></div>
+    <div class="card"><div class="kv"><span>Platos ${from||to?"del periodo":"en total"}</span><span>${cr.l+cr.t}</span></div><div class="kv sub2"><span>En local / para llevar</span><span>${cr.l} / ${cr.t}</span></div><div class="kv"><span>Productos a cuenta</span><span>${ex.q?ex.q+" · ":""}${money(ex.v)}</span></div><div class="kv"><span>Total ${from||to?"del periodo":"consumido"}</span><span>${money(cr.v+ex.v)}</span></div></div>
+    ${cr.days.length?`<div class="list">${cr.days.map(x=>`<div class="lrow static"><span><b>${fmt(x.d)}</b><br><span class="sub">${MEALS.filter(m=>x.cells[m[0]]&&(x.cells[m[0]].l||x.cells[m[0]].t)).map(m=>{const c=x.cells[m[0]];return m[1]+" "+(c.l||0)+(c.t?` + ${c.t} llevar`:"");}).join(" · ")}</span></span><b class="num">${money(Object.values(x.cells).reduce((a,c)=>a+(c.v||0),0))}</b></div>`).join("")}</div>`:`<div class="empty">Sin consumo ${from||to?"en ese periodo":"registrado"}.</div>`}
+    ${ex.days.length?`<h2>Productos</h2><div class="list">${ex.days.map(x=>`<div class="lrow static"><span><b>${fmt(x.d)}</b><br><span class="sub">${Object.entries(x.items).filter(([,c])=>c.q).map(([id,c])=>esc(prodName(id))+" "+c.q).join(" · ")}</span></span><b class="num">${money(Object.values(x.items).reduce((a,c)=>a+(c.v||0),0))}</b></div>`).join("")}</div>`:""}
+    ${pagos.length?`<h2>Pagos</h2><div class="list">${pagos.map(g=>`<div class="lrow static"><span><b>${money(g.amount)}</b><br><span class="sub">${fmt(g.date)} · ${g.method==="yape"?"Yape":"Efectivo"}</span></span>${confirmDel===g.id?`<button class="btn danger" type="button" data-gdel="${esc(g.id)}">Confirmar borrar</button>`:`<button class="btn" type="button" data-gask="${esc(g.id)}">Borrar</button>`}</div>`).join("")}</div>`:""}
+    <label class="field">Nombre<input id="pd-name" value="${esc(p.name)}" maxlength="80"></label>
+    <div class="btns"><button class="btn" type="button" id="pd-rename">Guardar nombre</button><button class="btn" type="button" id="pd-active">${p.active===false?"Volver a activar":"Archivar"}</button><button class="btn" type="button" id="pd-close">Cerrar</button></div>
+    ${p.active===false?"":`<p class="note">Archivar oculta a la persona de la lista de Hoy sin borrar su historial.</p>`}`,f=>{
+    f.querySelector("#pd-close").onclick=closeSheet;
+    f.querySelector("#pd-pay").onclick=()=>payFormSheet(pid);
+    const re=()=>pensSheet(pid,f.querySelector("#pd-from").value,f.querySelector("#pd-to").value);
+    f.querySelector("#pd-from").onchange=re;f.querySelector("#pd-to").onchange=re;
+    f.querySelector("#pd-rename").onclick=()=>{const n=f.querySelector("#pd-name").value.trim();if(!n)return;patchPens(pid,{name:n});toast("Nombre guardado");re();};
+    f.querySelector("#pd-active").onclick=()=>{patchPens(pid,{active:p.active===false});closeSheet();};
+    f.querySelectorAll("[data-gask]").forEach(b=>b.onclick=()=>pensSheet(pid,from,to,b.dataset.gask));
+    f.querySelectorAll("[data-gdel]").forEach(b=>b.onclick=()=>{delPago(b.dataset.gdel);pensSheet(pid,from,to);});
+  });
+}
+
+function ventaSheet(){
+  openSheet(`<h2>Registrar venta</h2>
+    <div class="grid2"><label class="field">Tipo<select id="vt"><option value="menu">Menú</option><option value="prod">Producto (bebida, galletas…)</option></select></label>
+    <label class="field">Método<select id="vm"><option value="efectivo"${ui.vMethod==="efectivo"?" selected":""}>Efectivo</option><option value="yape"${ui.vMethod==="yape"?" selected":""}>Yape</option></select></label></div>
+    <label class="field">Descripción <span id="vn-hint">(opcional)</span><input id="vn" maxlength="80" placeholder="Ej. Almuerzo, Inca Kola"></label>
+    <div class="grid2"><label class="field">Cantidad<input id="vq" type="number" min="1" step="1" inputmode="numeric" value="1" required></label>
+    <label class="field">Precio unitario (S/)<input id="vp" type="number" min="0.01" step="0.01" inputmode="decimal" required></label></div>
+    <div class="chips" id="vchips"><button class="chip" type="button" data-p="10" aria-pressed="false">S/ 10</button><button class="chip" type="button" data-p="11" aria-pressed="false">S/ 11</button></div>
+    <div class="grid2"><label class="field">Fecha<input id="vd" type="date" value="${esc(ui.vDate)}" max="${esc(ds())}" required></label>
+    <label class="field">Comida<select id="vmeal">${MEALS.map(m=>`<option value="${m[0]}"${m[0]===ui.vMeal?" selected":""}>${m[1]}</option>`).join("")}</select></label></div>
+    <p class="note" id="vtotal">Total: S/ 0.00</p>
+    <div class="err" id="v-err"></div>
+    <div class="btns"><button class="btn primary" type="submit">Guardar venta</button><button class="btn" type="button" id="v-cancel">Cancelar</button></div>`,f=>{
+    const q=s=>f.querySelector(s),upd=()=>{q("#vtotal").textContent="Total: "+money((+q("#vq").value||0)*(+q("#vp").value||0));};
+    const tipo=()=>{const pr=q("#vt").value==="prod";q("#vn-hint").textContent=pr?"(obligatoria)":"(opcional)";q("#vchips").hidden=pr;};
+    q("#vt").onchange=tipo;q("#vq").oninput=upd;q("#vp").oninput=upd;tipo();
+    q("#vchips").onclick=e=>{const b=e.target.closest("[data-p]");if(b){q("#vp").value=b.dataset.p;upd();}};
+    q("#v-cancel").onclick=closeSheet;
+    f.onsubmit=e=>{e.preventDefault();
+      const t=q("#vt").value,n=q("#vn").value.trim(),qty=Math.floor(+q("#vq").value),pr=+q("#vp").value,d=q("#vd").value;
+      if(t==="prod"&&!n){q("#v-err").textContent="Escribe el nombre del producto.";return;}
+      if(!(qty>=1)||!(pr>0)){q("#v-err").textContent="Revisa la cantidad y el precio.";return;}
+      if(!d){q("#v-err").textContent="Elige la fecha.";return;}
+      ui.vMeal=q("#vmeal").value;ui.vMethod=q("#vm").value;addVenta(d,{tipo:t,name:n,qty,price:r2(pr),method:q("#vm").value,meal:q("#vmeal").value});
+      ui.vDate=d;closeSheet();toast("Venta registrada");
+    };
+    q("#vp").focus();
+  });
+}
+
+// ---------- Eventos ----------
+document.addEventListener("click",e=>{
+  const nb=e.target.closest("#nav [data-tab]");
+  if(nb){ui.tab=nb.dataset.tab;ui.cv=null;render();window.scrollTo(0,0);return;}
+  const b=e.target.closest("#app [data-a]");if(!b)return;
+  const a=b.dataset.a;
+  if(a==="meal"){ui.meal=b.dataset.k;render();}
+  else if(a==="bump")bump(b.dataset.id,b.dataset.k,+b.dataset.d);
+  else if(a==="addpens")addPensSheet();
+  else if(a==="quickadd")addPensSheet(ui.q.trim());
+  else if(a==="pensdet")pensSheet(b.dataset.id);
+  else if(a==="addventa")ventaSheet();
+  else if(a==="voidask"){ui.cv=b.dataset.id;render();}
+  else if(a==="voidyes")voidVenta(ui.vDate,b.dataset.id);
+  else if(a==="rp"){ui.rp=b.dataset.k;render();}
+  else if(a==="mode"){ui.mode=b.dataset.k;render();}
+  else if(a==="bumpx")bumpx(b.dataset.id,b.dataset.p,+b.dataset.d);
+  else if(a==="prods")prodSheet();
+  else if(a==="pick")pickSheet(b.dataset.id);
+  else if(a==="sell")sellSheet();
+  else if(a==="vmeal"){ui.vMeal=b.dataset.k;render();}
+  else if(a==="vmeth"){ui.vMethod=b.dataset.k;render();}
+  else if(a==="quick"){const p=+b.dataset.p;addVenta(ui.vDate,{tipo:"menu",name:"",qty:1,price:p,method:ui.vMethod,meal:ui.vMeal});toast("Anotado: "+money(p)+" · "+mealName(ui.vMeal)+" · "+(ui.vMethod==="yape"?"Yape":"Efectivo"));}
+});
+document.addEventListener("input",e=>{
+  if(e.target.id==="q"){ui.q=e.target.value;render();}
+  else if(e.target.id==="q2"){ui.q2=e.target.value;render();}
+  else if(e.target.dataset&&e.target.dataset.cj){ui.cd[e.target.dataset.cj]=e.target.value;}
+});
+document.addEventListener("change",e=>{
+  const id=e.target.id;
+  if(id==="hoy-date"&&e.target.value){ui.date=e.target.value;render();}
+  else if(id==="v-date"&&e.target.value){ui.vDate=e.target.value;ui.cv=null;render();}
+  else if(id==="r-from"){ui.rf=e.target.value;render();}
+  else if(id==="r-to"){ui.rt=e.target.value;render();}
+  else if(id==="c-date"&&e.target.value){ui.cDate=e.target.value;ui.cd={};render();}
+  else if(e.target.dataset&&e.target.dataset.cj)saveCaja(e.target);
+});
+
+// ---------- Arranque ----------
+(async()=>{
+  const user=await claude.use("user");
+  isAdmin=!!(user&&await user.canEdit());
+  db=await claude.use("db");
+  if(!isAdmin||!db){
+    $("#app").innerHTML=`<div class="empty">${!db?"Inicia sesión en Claude para usar esta página.":"Esta página es solo para administradores."}</div>`;
+    $(".role").textContent="Sin acceso";return;
+  }
+  $("#nav").hidden=false;render();
+  const timer=setTimeout(()=>{$("#status").textContent="· Sin conexión, los datos pueden estar desactualizados";},10000);
+  const seen={};
+  const sub=(col,key)=>db.collection(col).onSnapshot(snap=>{
+    S[key]={};snap.docs.forEach(d=>{S[key][d.id]=clone(d.data());});
+    if(!seen[key]){seen[key]=1;loaded++;}
+    if(!snap.metadata.fromCache){clearTimeout(timer);$("#status").textContent="· En vivo";}
+    render();
+  },()=>{clearTimeout(timer);$("#status").textContent="· No se pudo cargar";});
+  sub("pensionistas","pens");sub("comidas","comidas");sub("pagos","pagos");sub("ventas","ventas");sub("cajas","cajas");sub("productos","prods");sub("extras","extras");
+})();
+</script>
