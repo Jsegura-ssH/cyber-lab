@@ -10,11 +10,11 @@ Web de control de pensionistas y de todo el dinero que entra al restaurante, pub
 - **Hoy:** anota platos de pensionistas (desayuno, almuerzo, cena; S/ 10 en local, S/ 11 para llevar) o sus productos (lista oculta con buscador y cantidad por toque).
 - **Pensionistas:** deuda de cada uno, detalle por día y periodo, pagos parciales (efectivo o Yape), archivar.
 - **Ventas:** ventas de menú y de productos, anotadas por comida y método; registro rápido de un toque.
-- **Caja:** cuadre por desayuno, almuerzo y cena (efectivo y Yape esperado vs. contado).
-- **Resumen:** dinero que entró por periodo, platos totales y mejor/peor día de la semana.
+- **Caja:** cuadre por desayuno, almuerzo y cena (efectivo y Yape esperado vs. contado) y salidas de caja (gas, compras, otros), que se restan del efectivo esperado.
+- **Resumen:** dinero que entró por periodo, salidas de caja por tipo, platos totales y mejor/peor día de la semana.
 
 ## Datos (base de datos del artifact)
-`pensionistas`, `comidas` (por pensionista y mes), `extras` (productos a cuenta), `pagos`, `ventas` (por día), `cajas` (por día), `productos`.
+`pensionistas`, `comidas` (por pensionista y mes), `extras` (productos a cuenta), `pagos`, `ventas` (por día), `salidas` (por día), `cajas` (por día), `productos`.
 
 ## Notas
 - Los precios se guardan con cada registro: cambiarlos no altera lo anterior.

@@ -28,7 +28,7 @@ h2{font-family:var(--display);font-weight:600;font-size:1.1rem;margin:0}
 input,select,textarea{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
 input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}
-.ctrls{display:grid;grid-template-columns:1fr;gap:8px}
+.ctrls{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
 .chip{font:inherit;font-size:.88rem;padding:8px 14px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
@@ -76,7 +76,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .sheet-bg{position:fixed;inset:0;background:rgb(0 0 0 / .45);display:flex;align-items:flex-end;justify-content:center;z-index:20}
 .sheet{background:var(--surface);width:100%;max-width:640px;border-radius:16px 16px 0 0;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:12px;max-height:92vh;overflow:auto}
 .field{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted)}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.grid2>*,.field{min-width:0}
+input[type=date]{min-width:0;max-width:100%;display:block}
 .note{font-size:.85rem;color:var(--muted)}
 .err{color:var(--crit);font-size:.85rem}
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:99px;font-size:.88rem;z-index:30;max-width:90vw}
@@ -103,6 +105,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 <script>
 const PL=10, PT=11; // precio plato: en local / para llevar
 const MEALS=[["d","Desayuno"],["a","Almuerzo"],["c","Cena"]];
+const TIPOS=[["gas","Gas"],["compras","Compras"],["otros","Otros"]];
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const r2=n=>Math.round((n||0)*100)/100;
@@ -115,7 +118,7 @@ const mealName=k=>(MEALS.find(m=>m[0]===k)||[,k])[1];
 const defMeal=()=>{const h=new Date().getHours();return h<11?"d":h<17?"a":"c";};
 
 let db=null, isAdmin=false, loaded=0;
-const S={pens:{},comidas:{},pagos:{},ventas:{},cajas:{},prods:{},extras:{}};
+const S={pens:{},comidas:{},pagos:{},ventas:{},cajas:{},prods:{},extras:{},salidas:{}};
 const ui={tab:"hoy",date:ds(),meal:defMeal(),q:"",q2:"",vDate:ds(),rp:"hoy",rf:"",rt:"",cv:null,vMeal:defMeal(),vMethod:"efectivo",cDate:ds(),cd:{},mode:"platos"};
 
 // ---------- Escritura en cola (una a la vez por documento) ----------
@@ -165,13 +168,14 @@ function rango(){
   return[ui.rf||"0000-00-00",ui.rt||"9999-99-99"];
 }
 function resumen(from,to){
-  const r={pen:{e:0,y:0},menu:{e:0,y:0},prod:{e:0,y:0},pl:0,pt:0,consumo:0,px:0};
+  const r={pen:{e:0,y:0},menu:{e:0,y:0},prod:{e:0,y:0},pl:0,pt:0,consumo:0,px:0,sal:{},salT:0};
   for(const g of Object.values(S.pagos)){if(g.date<from||g.date>to)continue;r.pen[g.method==="yape"?"y":"e"]+=g.amount||0;}
   for(const [date,doc] of Object.entries(S.ventas)){if(date<from||date>to)continue;
     for(const e of Object.values(doc.entries||{})){if(e.void)continue;r[e.tipo==="prod"?"prod":"menu"][e.method==="yape"?"y":"e"]+=(e.qty||0)*(e.price||0);}}
   for(const doc of Object.values(S.comidas))for(const [d,cells] of Object.entries(doc.days||{})){if(d<from||d>to)continue;
     for(const c of Object.values(cells)){r.pl+=c.l||0;r.pt+=c.t||0;r.consumo+=c.v||0;}}
   for(const doc of Object.values(S.extras))for(const [d,items] of Object.entries(doc.days||{})){if(d<from||d>to)continue;for(const c of Object.values(items)){r.px+=c.v||0;r.consumo+=c.v||0;}}
+  for(const [d,doc] of Object.entries(S.salidas)){if(d<from||d>to)continue;for(const e of Object.values(doc.entries||{})){if(e.void)continue;const k=e.tipo||"otros";r.sal[k]=(r.sal[k]||0)+(e.amount||0);r.salT+=e.amount||0;}}
   return r;
 }
 const tot=o=>o.e+o.y;
@@ -264,6 +268,7 @@ function viewResumen(per){
       <div class="kv sub2"><span>Productos a cuenta</span><span>${money(r.px)}</span></div>
       <div class="kv"><span>Consumo del periodo</span><span>${money(r.consumo)}</span></div>
       <div class="kv"><span>Por cobrar (acumulado)</span><span>${money(porCobrar)}</span></div></div>
+    ${viewSalidas(r,ing)}
     ${viewDias()}
     <p class="note">«Dinero que entró» cuenta solo lo cobrado: pagos de pensionistas y ventas. El consumo de pensionistas que aún no pagaron aparece en «Por cobrar».</p>`;
 }
@@ -287,8 +292,68 @@ function viewDias(){
     <p class="note">Cuenta los platos de pensionistas (en local y para llevar) y las ventas de menú. Se compara el promedio por día, para que un día de la semana con más fechas registradas no gane por tener más semanas.</p></div>`;
 }
 
+const tipoName=k=>(TIPOS.find(t=>t[0]===k)||[,"Otros"])[1];
+function salidasDia(date){
+  const doc=S.salidas[date],list=Object.entries((doc&&doc.entries)||{}).map(([id,e])=>({id,...e})).filter(e=>!e.void).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  return {list,total:list.reduce((a,e)=>a+(e.amount||0),0)};
+}
+function salidasBlock(date,sd){
+  let h=`<div class="card"><div class="prow"><h2>Salidas de caja</h2><b class="num">${sd.total?"−"+money(sd.total):money(0)}</b></div><div class="btns" style="margin-top:8px"><button class="btn primary" data-a="salida">+ Anotar salida</button></div>`;
+  if(sd.list.length)h+=`<div class="list" style="margin-top:8px">${sd.list.map(e=>`<div class="lrow static"><span style="min-width:0"><span class="pname">${esc(e.motivo||tipoName(e.tipo))}</span><br><span class="sub">${tipoName(e.tipo)}${e.meal?" · "+mealName(e.meal):""}</span></span><span style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><b class="num">−${money(e.amount)}</b>${ui.cv===e.id?`<button class="btn danger" data-a="salyes" data-id="${esc(e.id)}">Confirmar anular</button>`:`<button class="btn" data-a="salask" data-id="${esc(e.id)}">Anular</button>`}</span></div>`).join("")}</div>`;
+  else h+=`<p class="note">No hay salidas anotadas en este día.</p>`;
+  return h+`</div>`;
+}
+function addSalida(date,e){
+  const id=uid(),entry={...e,createdAt:Date.now()};
+  const doc=S.salidas[date]||(S.salidas[date]={date,entries:{}});
+  doc.entries=doc.entries||{};doc.entries[id]=entry;render();
+  enqueue("s"+date,async()=>{
+    try{await db.doc("salidas/"+date).update({entries:{[id]:entry}});}
+    catch(x){if(x&&x.code==="invalid_argument")await db.doc("salidas/"+date).set({date,entries:{[id]:entry}});else throw x;}
+  });
+}
+function voidSalida(date,id){
+  const doc=S.salidas[date];if(!doc||!doc.entries||!doc.entries[id])return;
+  doc.entries[id].void=true;ui.cv=null;render();
+  enqueue("s"+date,()=>db.doc("salidas/"+date).update({entries:{[id]:{void:true}}}));
+}
+function salidaSheet(){
+  openSheet(`<h2>Anotar salida de caja</h2>
+    <p class="note">Plata en efectivo que se saca de la caja. Se resta del efectivo esperado de esa comida.</p>
+    <div class="grid2"><label class="field">Tipo<select id="sa-t">${TIPOS.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join("")}</select></label>
+    <label class="field">Monto (S/)<input id="sa-m" type="number" min="0.01" step="0.01" inputmode="decimal" required></label></div>
+    <label class="field">Motivo (opcional)<input id="sa-n" maxlength="80" placeholder="Ej. balón de gas, verduras"></label>
+    <div class="grid2"><label class="field">Fecha<input id="sa-d" type="date" value="${esc(ui.cDate)}" max="${esc(ds())}" required></label>
+    <label class="field">Comida<select id="sa-c">${MEALS.map(m=>`<option value="${m[0]}"${m[0]===defMeal()?" selected":""}>${m[1]}</option>`).join("")}</select></label></div>
+    <div class="err" id="sa-err"></div>
+    <div class="btns"><button class="btn primary" type="submit">Guardar salida</button><button class="btn" type="button" id="sa-x">Cancelar</button></div>`,f=>{
+    f.querySelector("#sa-x").onclick=closeSheet;
+    f.onsubmit=e=>{e.preventDefault();
+      const amt=+f.querySelector("#sa-m").value,d=f.querySelector("#sa-d").value,err=f.querySelector("#sa-err");
+      if(!(amt>0)){err.textContent="Escribe un monto mayor a 0.";return;}
+      if(!d){err.textContent="Elige la fecha.";return;}
+      addSalida(d,{tipo:f.querySelector("#sa-t").value,amount:r2(amt),motivo:f.querySelector("#sa-n").value.trim(),meal:f.querySelector("#sa-c").value});
+      ui.cDate=d;ui.cd={};closeSheet();toast("Salida anotada");render();
+    };
+    f.querySelector("#sa-m").focus();
+  });
+}
+function viewSalidas(r,ing){
+  const [from,to]=rango();
+  if(!r.salT)return `<div class="card"><div class="sub">Salidas de caja</div><div class="big">${money(0)}</div><p class="note">No hay salidas en este periodo.</p></div>`;
+  const rows=Object.keys(r.sal).map(k=>({n:tipoName(k),v:r.sal[k]})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v);
+  const list=[];
+  for(const [d,doc] of Object.entries(S.salidas)){if(d<from||d>to)continue;for(const e of Object.values(doc.entries||{}))if(!e.void)list.push({d,...e});}
+  list.sort((a,b)=>b.d.localeCompare(a.d)||(b.createdAt||0)-(a.createdAt||0));
+  return `<div class="card"><div class="sub">Salidas de caja</div><div class="big">${money(r.salT)}</div>
+    ${rows.map(x=>`<div class="drow"><div class="prow"><span>${esc(x.n)}</span><span class="sub num">${money(x.v)} · ${Math.round(x.v/r.salT*100)}%</span></div><div class="bar"><i style="width:${Math.max(3,Math.round(x.v/r.salT*100))}%"></i></div></div>`).join("")}
+    <div class="kv" style="margin-top:6px"><span>Entró menos salidas</span><span>${money(ing-r.salT)}</span></div>
+    <h2 style="margin:10px 0 4px">Detalle</h2>
+    ${list.slice(0,40).map(e=>`<div class="kv"><span>${fmt(e.d).slice(0,5)} · ${esc(e.motivo||tipoName(e.tipo))}</span><span>${money(e.amount)}</span></div>`).join("")}
+    ${list.length>40?`<p class="note">Se muestran las 40 más recientes.</p>`:""}</div>`;
+}
 function cajaBloque(date,meal){
-  const r={e:{menu:0,prod:0,pen:0},y:{menu:0,prod:0,pen:0},platos:0};
+  const r={e:{menu:0,prod:0,pen:0},y:{menu:0,prod:0,pen:0},platos:0,sal:0};
   const doc=S.ventas[date];
   for(const e of Object.values((doc&&doc.entries)||{})){
     if(e.void||(e.meal||"")!==meal)continue;
@@ -298,18 +363,20 @@ function cajaBloque(date,meal){
     if(g.date!==date||(g.meal||"")!==meal)continue;
     r[g.method==="yape"?"y":"e"].pen+=g.amount||0;
   }
+  const sd0=S.salidas[date];
+  for(const e of Object.values((sd0&&sd0.entries)||{})){if(e.void||(e.meal||"")!==meal)continue;r.sal+=e.amount||0;}
   if(meal)for(const d of Object.values(S.comidas)){const c=d.days&&d.days[date]&&d.days[date][meal];if(c)r.platos+=(c.l||0)+(c.t||0);}
   return r;
 }
 const sm=o=>o.menu+o.prod+o.pen;
 function dtag(d){d=r2(d);return d===0?`<span class="tag ok">Cuadra</span>`:d>0?`<span class="tag ok">Sobra ${money(d)}</span>`:`<span class="tag debt">Falta ${money(-d)}</span>`;}
 function viewCaja(){
-  const date=ui.cDate,caja=S.cajas[date]||{};
+  const date=ui.cDate,caja=S.cajas[date]||{},sd=salidasDia(date);
   const saved=(m,k)=>{const v=(caja[m]||{})[k];return v==null?null:v;};
   const val=(m,k)=>{const key=date+"|"+m+"|"+k;if(key in ui.cd)return ui.cd[key];const v=saved(m,k);return v==null?"":v;};
   let totEe=0,totEy=0,cntE=0,cntY=0,expE=0,expY=0,hasE=false,hasY=false,cards="";
   for(const m of [...MEALS.map(x=>x[0]),""]){
-    const r=cajaBloque(date,m),ee=sm(r.e),ey=sm(r.y);
+    const r=cajaBloque(date,m),ee=sm(r.e)-r.sal,ey=sm(r.y);
     totEe+=ee;totEy+=ey;
     if(!m){
       if(ee||ey)cards+=`<div class="card"><h2>Sin comida asignada</h2><div class="kv"><span>Efectivo</span><span>${money(ee)}</span></div><div class="kv"><span>Yape</span><span>${money(ey)}</span></div><p class="note">Son ventas o cobros anotados antes de elegir la comida. Entran en el total del día.</p></div>`;
@@ -322,6 +389,7 @@ function viewCaja(){
       <div class="kv"><span>Menú (efectivo)</span><span>${money(r.e.menu)}</span></div>
       <div class="kv"><span>Productos (efectivo)</span><span>${money(r.e.prod)}</span></div>
       <div class="kv"><span>Cobros de pensionistas (efectivo)</span><span>${money(r.e.pen)}</span></div>
+      ${r.sal?`<div class="kv"><span>Salidas de caja</span><span>−${money(r.sal)}</span></div>`:""}
       <div class="kv"><span><b>Efectivo esperado</b></span><span>${money(ee)}</span></div>
       <label class="field" style="margin-top:8px">Efectivo contado (S/)<input type="number" min="0" step="0.01" inputmode="decimal" id="cj-${m}-e" data-cj="${date}|${m}|e" value="${esc(val(m,"e"))}"></label>
       ${ce!=null?`<div class="kv"><span>Resultado en efectivo</span><span>${dtag(ce-ee)}</span></div>`:""}
@@ -331,8 +399,10 @@ function viewCaja(){
       ${r.platos?`<p class="note">${r.platos} platos de pensionistas en esta comida (se cobran después, no entran a la caja).</p>`:""}</div>`;
   }
   return `<div class="ctrls"><input id="c-date" type="date" value="${esc(date)}" max="${esc(ds())}" aria-label="Fecha de la caja"></div>
+    ${salidasBlock(date,sd)}
     ${cards}
     <div class="card"><h2>Total del día</h2>
+      <div class="kv"><span>Salidas de caja (ya restadas)</span><span>${sd.total?"−"+money(sd.total):money(0)}</span></div>
       <div class="kv"><span>Efectivo esperado</span><span>${money(totEe)}</span></div>
       <div class="kv"><span>Yape esperado</span><span>${money(totEy)}</span></div>
       ${hasE?`<div class="kv"><span>Efectivo contado</span><span>${money(cntE)}</span></div><div class="kv"><span>Resultado en efectivo</span><span>${dtag(cntE-expE)}</span></div>`:""}
@@ -490,7 +560,7 @@ function render(){
   if(!isAdmin||!db)return;
   const a=document.activeElement,fid=a&&a.id&&$("#app").contains(a)?a.id:null,ss=fid&&a.selectionStart,se=fid&&a.selectionEnd;
   const per=calc();
-  $("#app").innerHTML=loaded<7?`<div class="empty">Cargando datos…</div>`:ui.tab==="hoy"?(ui.mode==="prod"?viewHoyProd(per):viewHoy(per)):ui.tab==="pens"?viewPens(per):ui.tab==="ventas"?viewVentas():ui.tab==="caja"?viewCaja():viewResumen(per);
+  $("#app").innerHTML=loaded<8?`<div class="empty">Cargando datos…</div>`:ui.tab==="hoy"?(ui.mode==="prod"?viewHoyProd(per):viewHoy(per)):ui.tab==="pens"?viewPens(per):ui.tab==="ventas"?viewVentas():ui.tab==="caja"?viewCaja():viewResumen(per);
   document.querySelectorAll("#nav button").forEach(b=>b.setAttribute("aria-current",b.dataset.tab===ui.tab?"page":"false"));
   if(fid){const el=document.getElementById(fid);if(el){el.focus();try{el.setSelectionRange(ss,se);}catch(e){}}}
 }
@@ -666,6 +736,9 @@ document.addEventListener("click",e=>{
   else if(a==="prods")prodSheet();
   else if(a==="pick")pickSheet(b.dataset.id);
   else if(a==="sell")sellSheet();
+  else if(a==="salida")salidaSheet();
+  else if(a==="salask"){ui.cv=b.dataset.id;render();}
+  else if(a==="salyes")voidSalida(ui.cDate,b.dataset.id);
   else if(a==="vmeal"){ui.vMeal=b.dataset.k;render();}
   else if(a==="vmeth"){ui.vMethod=b.dataset.k;render();}
   else if(a==="quick"){const p=+b.dataset.p;addVenta(ui.vDate,{tipo:"menu",name:"",qty:1,price:p,method:ui.vMethod,meal:ui.vMeal});toast("Anotado: "+money(p)+" · "+mealName(ui.vMeal)+" · "+(ui.vMethod==="yape"?"Yape":"Efectivo"));}
@@ -703,6 +776,6 @@ document.addEventListener("change",e=>{
     if(!snap.metadata.fromCache){clearTimeout(timer);$("#status").textContent="· En vivo";}
     render();
   },()=>{clearTimeout(timer);$("#status").textContent="· No se pudo cargar";});
-  sub("pensionistas","pens");sub("comidas","comidas");sub("pagos","pagos");sub("ventas","ventas");sub("cajas","cajas");sub("productos","prods");sub("extras","extras");
+  sub("pensionistas","pens");sub("comidas","comidas");sub("pagos","pagos");sub("ventas","ventas");sub("cajas","cajas");sub("productos","prods");sub("extras","extras");sub("salidas","salidas");
 })();
 </script>
